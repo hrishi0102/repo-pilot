@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
+// Markdown rendering libraries
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import remarkGfm from "remark-gfm";
+
 function App() {
   const [repoUrl, setRepoUrl] = useState("");
   const [sessionId, setSessionId] = useState("");
@@ -17,6 +23,9 @@ function App() {
       setSessionId(savedSessionId);
       setRepoUrl(savedRepoUrl);
     }
+
+    // Apply dark mode to body
+    document.body.classList.add("dark-mode");
   }, []);
 
   const ingestRepository = async () => {
@@ -96,6 +105,27 @@ function App() {
     setMessages([]);
   };
 
+  // Custom renderer for code blocks with syntax highlighting
+  const renderers = {
+    code({ node, inline, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || "");
+      return !inline && match ? (
+        <SyntaxHighlighter
+          style={vscDarkPlus}
+          language={match[1]}
+          PreTag="div"
+          {...props}
+        >
+          {String(children).replace(/\n$/, "")}
+        </SyntaxHighlighter>
+      ) : (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      );
+    },
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -116,27 +146,64 @@ function App() {
             <button
               onClick={ingestRepository}
               disabled={!repoUrl || ingestLoading}
+              className="primary-button"
             >
-              {ingestLoading ? "Processing..." : "Ingest Repository"}
+              {ingestLoading ? (
+                <>
+                  <span className="spinner"></span>
+                  Processing...
+                </>
+              ) : (
+                "Ingest Repository"
+              )}
             </button>
           </div>
         ) : (
           <>
             <div className="repo-info">
-              <p>Repository: {repoUrl}</p>
-              <button onClick={resetSession}>Change Repository</button>
+              <div className="repo-details">
+                <span className="repo-label">Repository:</span>
+                <span className="repo-url">{repoUrl}</span>
+              </div>
+              <button onClick={resetSession} className="secondary-button">
+                Change Repository
+              </button>
             </div>
 
             <div className="chat-container">
               <div className="messages">
                 {messages.map((message, index) => (
                   <div key={index} className={`message ${message.role}`}>
-                    <div className="message-content">{message.content}</div>
+                    <div className="message-header">
+                      <div className="message-avatar">
+                        {message.role === "user" ? "👤" : "🤖"}
+                      </div>
+                      <div className="message-role">
+                        {message.role === "user" ? "You" : "Assistant"}
+                      </div>
+                    </div>
+                    <div className="message-content">
+                      <ReactMarkdown
+                        children={message.content}
+                        remarkPlugins={[remarkGfm]}
+                        components={renderers}
+                      />
+                    </div>
                   </div>
                 ))}
                 {loading && (
                   <div className="message assistant">
-                    <div className="loading">Thinking...</div>
+                    <div className="message-header">
+                      <div className="message-avatar">🤖</div>
+                      <div className="message-role">Assistant</div>
+                    </div>
+                    <div className="message-content loading">
+                      <div className="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -150,7 +217,11 @@ function App() {
                   disabled={loading}
                   onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                 />
-                <button onClick={sendMessage} disabled={!query || loading}>
+                <button
+                  onClick={sendMessage}
+                  disabled={!query || loading}
+                  className="primary-button"
+                >
                   Send
                 </button>
               </div>
@@ -158,6 +229,10 @@ function App() {
           </>
         )}
       </main>
+
+      <footer>
+        <p>Powered by Supermemory & Gemini</p>
+      </footer>
     </div>
   );
 }
