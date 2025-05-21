@@ -95,11 +95,10 @@ async def ingest_repository(request: RepoRequest):
             async with httpx.AsyncClient() as client:
                 logger.info(f"Sending repository data to API for {request.repo_url}")
                 response = await client.post(
-                    "https://api.supermemory.ai/v3/https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+                    "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
                     headers={
                         "Content-Type": "application/json",
                         "Authorization": f"Bearer {os.environ.get('GEMINI_API_KEY')}",
-                        "x-api-key": os.environ.get('SUPERMEMORY_API_KEY')
                     },
                     json={
                         "model": "gemini-2.0-flash",
@@ -165,11 +164,10 @@ async def chat_with_repo(request: ChatRequest):
             # Send request to API with increased timeout
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    "https://api.supermemory.ai/v3/https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+                    "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
                     headers={
                         "Content-Type": "application/json",
                         "Authorization": f"Bearer {os.environ.get('GEMINI_API_KEY')}",
-                        "x-api-key": os.environ.get('SUPERMEMORY_API_KEY')
                     },
                     json={
                         "model": "gemini-2.0-flash",
