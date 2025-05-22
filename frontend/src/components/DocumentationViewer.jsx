@@ -14,7 +14,20 @@ function DocumentationViewer() {
   useEffect(() => {
     const storedData = localStorage.getItem("documentationData");
     if (storedData) {
-      setDocumentationData(JSON.parse(storedData));
+      const parsedData = JSON.parse(storedData);
+      setDocumentationData(parsedData);
+
+      // Debug: Log the structure to console
+      console.log("Documentation data:", parsedData);
+      console.log("Introduction:", parsedData.introduction?.substring(0, 200));
+      if (parsedData.chapters) {
+        Object.keys(parsedData.chapters).forEach((key) => {
+          console.log(
+            `${key}:`,
+            parsedData.chapters[key].content?.substring(0, 200)
+          );
+        });
+      }
     } else {
       navigate("/");
     }
@@ -29,17 +42,93 @@ function DocumentationViewer() {
           style={vscDarkPlus}
           language={match[1]}
           PreTag="div"
+          customStyle={{
+            margin: "1rem 0",
+            borderRadius: "0.5rem",
+            fontSize: "0.9rem",
+          }}
           {...props}
         >
           {String(children).replace(/\n$/, "")}
         </SyntaxHighlighter>
       ) : (
         <code
-          className="bg-gray-800 text-gray-200 px-1 py-0.5 rounded text-sm"
+          className="bg-gray-700 text-yellow-300 px-2 py-1 rounded text-sm font-mono"
           {...props}
         >
           {children}
         </code>
+      );
+    },
+    h1({ children }) {
+      return (
+        <h1 className="text-4xl font-bold text-blue-400 mb-6 pb-4 border-b-2 border-gray-600">
+          {children}
+        </h1>
+      );
+    },
+    h2({ children }) {
+      return (
+        <h2 className="text-3xl font-semibold text-blue-300 mt-8 mb-4 pb-2 border-b border-gray-700">
+          {children}
+        </h2>
+      );
+    },
+    h3({ children }) {
+      return (
+        <h3 className="text-2xl font-medium text-blue-200 mt-6 mb-3">
+          {children}
+        </h3>
+      );
+    },
+    p({ children }) {
+      return <p className="text-gray-300 mb-4 leading-relaxed">{children}</p>;
+    },
+    ul({ children }) {
+      return (
+        <ul className="list-disc pl-6 mb-4 space-y-2 text-gray-300">
+          {children}
+        </ul>
+      );
+    },
+    ol({ children }) {
+      return (
+        <ol className="list-decimal pl-6 mb-4 space-y-2 text-gray-300">
+          {children}
+        </ol>
+      );
+    },
+    li({ children }) {
+      return <li className="leading-relaxed">{children}</li>;
+    },
+    blockquote({ children }) {
+      return (
+        <blockquote className="border-l-4 border-blue-500 bg-blue-900/20 pl-4 py-2 my-4 italic text-gray-300">
+          {children}
+        </blockquote>
+      );
+    },
+    table({ children }) {
+      return (
+        <div className="overflow-x-auto my-4">
+          <table className="min-w-full border-collapse border border-gray-600">
+            {children}
+          </table>
+        </div>
+      );
+    },
+    th({ children }) {
+      return (
+        <th className="border border-gray-600 bg-gray-700 px-4 py-2 text-left font-semibold text-gray-200">
+          {children}
+        </th>
+      );
+    },
+    td({ children }) {
+      return (
+        <td className="border border-gray-600 px-4 py-2 text-gray-300">
+          {children}
+        </td>
       );
     },
   };
@@ -131,8 +220,8 @@ function DocumentationViewer() {
 
         {/* Main Content */}
         <div className="flex-1 ml-64">
-          <div className="max-w-4xl mx-auto px-6 py-8">
-            <div className="prose prose-invert max-w-none">
+          <div className="max-w-4xl mx-auto px-8 py-8">
+            <article className="prose prose-invert prose-lg max-w-none">
               {currentPage === "introduction" ? (
                 <ReactMarkdown
                   components={markdownComponents}
@@ -150,7 +239,7 @@ function DocumentationViewer() {
                     "# Chapter\n\nNo content available."}
                 </ReactMarkdown>
               )}
-            </div>
+            </article>
           </div>
         </div>
       </div>

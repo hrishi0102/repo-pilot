@@ -1,3 +1,180 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Enhanced prose styling for documentation */
+.prose {
+  max-width: none;
+  line-height: 1.75;
+}
+
+.prose h1 {
+  color: #60a5fa;
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 2rem;
+  border-bottom: 3px solid #2d3748;
+  padding-bottom: 1rem;
+}
+
+.prose h2 {
+  color: #93c5fd;
+  font-size: 1.875rem;
+  font-weight: 600;
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #374151;
+  padding-bottom: 0.5rem;
+}
+
+.prose h3 {
+  color: #bfdbfe;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.prose h4 {
+  color: #dbeafe;
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose p {
+  color: #d1d5db;
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
+}
+
+.prose strong {
+  color: #f3f4f6;
+  font-weight: 600;
+}
+
+.prose ul,
+.prose ol {
+  color: #d1d5db;
+  margin: 1.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin: 0.75rem 0;
+  line-height: 1.7;
+}
+
+.prose li > ul,
+.prose li > ol {
+  margin: 0.5rem 0;
+}
+
+.prose blockquote {
+  border-left: 4px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 1.5rem;
+  margin: 2rem 0;
+  font-style: italic;
+  color: #cbd5e1;
+}
+
+.prose pre {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  overflow-x: auto;
+}
+
+.prose code:not(pre code) {
+  background: #374151;
+  color: #fbbf24;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 2rem 0;
+  font-size: 0.95rem;
+}
+
+.prose th,
+.prose td {
+  padding: 1rem;
+  border: 1px solid #4a5568;
+  text-align: left;
+}
+
+.prose th {
+  background: #2d3748;
+  font-weight: 600;
+  color: #f7fafc;
+}
+
+.prose td {
+  background: #1a202c;
+}
+
+.prose a {
+  color: #60a5fa;
+  text-decoration: underline;
+  text-decoration-color: rgba(96, 165, 250, 0.4);
+}
+
+.prose a:hover {
+  color: #93c5fd;
+  text-decoration-color: rgba(147, 197, 253, 0.6);
+}
+
+/* Custom scrollbar */
+.prose::-webkit-scrollbar {
+  width: 8px;
+}
+
+.prose::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.prose::-webkit-scrollbar-thumb {
+  background: #4a5568;
+  border-radius: 4px;
+}
+
+.prose::-webkit-scrollbar-thumb:hover {
+  background: #2d3748;
+}
+
+/* Better spacing and readability */
+.prose > * + * {
+  margin-top: 1.5rem;
+}
+
+.prose > h1 + *,
+.prose > h2 + *,
+.prose > h3 + * {
+  margin-top: 1rem;
+}
+
+/* Enhanced list styling */
+.prose ul > li::marker {
+  color: #60a5fa;
+}
+
+.prose ol > li::marker {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+/* Checkbox styling for task lists */
+.prose input[type="checkbox"] {
+  margin-right: 0.5rem;
+  accent-color: #3b82f6;
+}
