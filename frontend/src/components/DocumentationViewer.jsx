@@ -1,138 +1,116 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import remarkGfm from "remark-gfm";
 
-function DocumentationViewer() {
-  const [documentationData, setDocumentationData] = useState(null);
-  const [currentPage, setCurrentPage] = useState("introduction");
+export default function DocumentationViewer() {
+  const [docData, setDocData] = useState(null);
+  const [page, setPage] = useState("introduction");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     try {
-      const storedData = localStorage.getItem("documentationData");
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        if (!parsedData.introduction && !parsedData.chapters) {
-          throw new Error("Invalid documentation data structure");
-        }
-        setDocumentationData(parsedData);
-      } else {
-        setError("No documentation data found");
-        setTimeout(() => navigate("/"), 2000);
-      }
+      const stored = localStorage.getItem("documentationData");
+      if (!stored) throw new Error("No documentation data found");
+      const parsed = JSON.parse(stored);
+      if (!parsed.introduction || !parsed.chapters)
+        throw new Error("Invalid documentation data structure");
+      setDocData(parsed);
     } catch (err) {
-      console.error("Error loading documentation:", err);
-      setError("Failed to load documentation data");
+      console.error(err);
+      setError(err.message);
       setTimeout(() => navigate("/"), 2000);
     } finally {
       setLoading(false);
     }
   }, [navigate]);
 
-  // Custom markdown components for proper rendering
   const markdownComponents = {
+    // HEADINGS
     h1: ({ children }) => (
-      <h1 className="text-4xl font-bold text-white mb-8 mt-0">{children}</h1>
+      <h1 className="text-4xl font-bold text-white my-6">{children}</h1>
     ),
     h2: ({ children }) => (
-      <h2 className="text-3xl font-semibold text-white mt-10 mb-6">
-        {children}
-      </h2>
+      <h2 className="text-3xl font-semibold text-white my-5">{children}</h2>
     ),
     h3: ({ children }) => (
-      <h3 className="text-2xl font-medium text-white mt-8 mb-4">{children}</h3>
-    ),
-    h4: ({ children }) => (
-      <h4 className="text-xl font-medium text-gray-100 mt-6 mb-3">
-        {children}
-      </h4>
-    ),
-    h5: ({ children }) => (
-      <h5 className="text-lg font-medium text-gray-200 mt-4 mb-2">
-        {children}
-      </h5>
-    ),
-    h6: ({ children }) => (
-      <h6 className="text-base font-medium text-gray-300 mt-3 mb-2">
-        {children}
-      </h6>
+      <h3 className="text-2xl font-medium text-white my-4">{children}</h3>
     ),
     p: ({ children }) => (
       <p className="text-gray-300 mb-4 leading-relaxed">{children}</p>
     ),
+
+    // LISTS
     ul: ({ children }) => (
-      <ul className="list-disc list-inside mb-4 text-gray-300 space-y-2">
+      <ul className="list-disc list-inside mb-4 space-y-2 text-gray-300">
         {children}
       </ul>
     ),
     ol: ({ children }) => (
-      <ol className="list-decimal list-inside mb-4 text-gray-300 space-y-2">
+      <ol className="list-decimal list-inside mb-4 space-y-2 text-gray-300">
         {children}
       </ol>
     ),
     li: ({ children }) => <li className="ml-4">{children}</li>,
+
+    // BLOCKQUOTE
     blockquote: ({ children }) => (
-      <blockquote className="border-l-4 border-blue-500 pl-4 py-2 my-4 bg-gray-800 rounded-r">
+      <blockquote className="border-l-4 border-purple-500 pl-4 italic text-gray-200 my-4">
         {children}
       </blockquote>
     ),
+
+    // CODE
     code({ node, inline, className, children, ...props }) {
       const match = /language-(\w+)/.exec(className || "");
-      const language = match ? match[1] : "";
+      const lang = match?.[1] || "";
+      const codeString = String(children).replace(/\n$/, "");
 
-      if (!inline && match) {
+      if (!inline && lang) {
         return (
-          <div className="my-6 rounded-lg overflow-hidden bg-gray-900 border border-gray-700">
-            <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
-              <span className="text-sm text-gray-400 font-mono">
-                {language}
-              </span>
+          <div className="my-6 bg-gray-900 border border-gray-700 rounded-lg overflow-hidden">
+            <div className="flex justify-between bg-gray-800 px-4 py-2 border-b border-gray-700">
+              <span className="text-xs text-gray-400 font-mono">{lang}</span>
               <button
-                onClick={() =>
-                  navigator.clipboard.writeText(
-                    String(children).replace(/\n$/, "")
-                  )
-                }
-                className="text-sm text-gray-400 hover:text-white transition-colors"
+                onClick={() => navigator.clipboard.writeText(codeString)}
+                className="text-xs text-gray-400 hover:text-white"
               >
                 Copy
               </button>
             </div>
             <SyntaxHighlighter
               style={oneDark}
-              language={language}
+              language={lang}
               PreTag="div"
               customStyle={{
                 margin: 0,
                 padding: "1rem",
                 background: "transparent",
-                fontSize: "14px",
               }}
               {...props}
             >
-              {String(children).replace(/\n$/, "")}
+              {codeString}
             </SyntaxHighlighter>
           </div>
         );
       }
 
       return (
-        <code
-          className="bg-gray-800 text-blue-300 px-2 py-1 rounded text-sm font-mono"
-          {...props}
-        >
+        <code className="bg-gray-800 text-purple-300 px-1 py-0.5 rounded text-sm font-mono">
           {children}
         </code>
       );
     },
-    pre: ({ children }) => <>{children}</>,
+
+    // TABLES
     table: ({ children }) => (
-      <div className="overflow-x-auto my-6">
+      <div className="overflow-x-auto mb-6">
         <table className="min-w-full border-collapse border border-gray-700">
           {children}
         </table>
@@ -144,7 +122,7 @@ function DocumentationViewer() {
       <tr className="border-b border-gray-700">{children}</tr>
     ),
     th: ({ children }) => (
-      <th className="px-4 py-2 text-left font-semibold text-white border border-gray-700">
+      <th className="px-4 py-2 text-left text-white font-semibold border border-gray-700">
         {children}
       </th>
     ),
@@ -153,167 +131,135 @@ function DocumentationViewer() {
         {children}
       </td>
     ),
+
+    // LINKS & IMAGES
     a: ({ href, children }) => (
       <a
         href={href}
-        className="text-blue-400 hover:text-blue-300 underline"
+        className="text-purple-400 hover:text-purple-300 underline"
         target="_blank"
         rel="noopener noreferrer"
       >
         {children}
       </a>
     ),
-    strong: ({ children }) => (
-      <strong className="font-semibold text-white">{children}</strong>
-    ),
-    em: ({ children }) => <em className="italic text-gray-200">{children}</em>,
-    hr: () => <hr className="my-8 border-gray-700" />,
     img: ({ src, alt }) => (
-      <img src={src} alt={alt} className="max-w-full h-auto rounded-lg my-4" />
+      <img src={src} alt={alt} className="max-w-full h-auto rounded my-4" />
     ),
+    hr: () => <hr className="border-gray-700 my-8" />,
   };
 
-  const handleNewRepository = () => {
-    localStorage.removeItem("documentationData");
-    localStorage.removeItem("sessionId");
-    localStorage.removeItem("repoUrl");
-    navigate("/");
-  };
-
-  const cleanChapterTitle = (title) => {
-    if (!title) return "Untitled Chapter";
-    return (
-      title
-        .replace(/^Chapter\s*\d+\s*[:.-]\s*/gi, "")
-        .replace(/^\d+\.\s*/, "")
-        .trim() || "Untitled Chapter"
-    );
-  };
-
-  const getCurrentContent = () => {
-    if (!documentationData) return "";
-
-    if (currentPage === "introduction") {
-      return (
-        documentationData.introduction ||
-        "# Introduction\n\nNo introduction available."
-      );
-    }
-
-    const chapter = documentationData.chapters?.[currentPage];
-    return (
-      chapter?.content ||
-      "# Chapter Not Found\n\nThe requested chapter could not be found."
-    );
+  const getContent = () => {
+    if (!docData) return "";
+    if (page === "introduction") return docData.introduction;
+    return docData.chapters[page]?.content || "# Not Found\n\nContent missing.";
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="text-white">Loading documentation...</div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-950">
+        <span className="text-white">Loading…</span>
       </div>
     );
   }
 
-  if (error || !documentationData) {
+  if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="text-center">
-          <p className="text-red-400 mb-4">
-            {error || "No documentation data found"}
-          </p>
-          <button
-            onClick={() => navigate("/")}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-          >
-            Go Home
-          </button>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950">
+        <p className="text-red-400 mb-4">{error}</p>
+        <button
+          onClick={() => navigate("/")}
+          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition-colors duration-200"
+        >
+          Go Home
+        </button>
       </div>
     );
   }
 
-  const chapters = documentationData.chapters || {};
-  const chapterKeys = Object.keys(chapters).sort((a, b) => {
-    const numA = parseInt(a.replace("chapter_", ""));
-    const numB = parseInt(b.replace("chapter_", ""));
-    return numA - numB;
+  // build chapter list
+  const chapterKeys = Object.keys(docData.chapters).sort((a, b) => {
+    return +a.replace("chapter_", "") - +b.replace("chapter_", "");
   });
 
+  const cleanTitle = (t) => t.replace(/^Chapter\s*\d+[:.-]\s*/, "").trim();
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-72 bg-gray-800 border-r border-gray-700 min-h-screen fixed">
-          <div className="p-6 border-b border-gray-700">
-            <h2 className="font-bold text-xl mb-2">
-              {documentationData.repo_url?.split("/").pop() || "Repository"}
-            </h2>
-          </div>
-
-          <nav className="p-4">
-            <button
-              onClick={() => setCurrentPage("introduction")}
-              className={`w-full text-left p-3 rounded mb-2 transition-colors ${
-                currentPage === "introduction"
-                  ? "bg-blue-600 text-white"
-                  : "hover:bg-gray-700 text-gray-300"
-              }`}
-            >
-              Introduction
-            </button>
-
-            {chapterKeys.map((chapterKey) => {
-              const chapter = chapters[chapterKey];
-              return (
-                <button
-                  key={chapterKey}
-                  onClick={() => setCurrentPage(chapterKey)}
-                  className={`w-full text-left p-3 rounded mb-2 transition-colors ${
-                    currentPage === chapterKey
-                      ? "bg-blue-600 text-white"
-                      : "hover:bg-gray-700 text-gray-300"
-                  }`}
-                >
-                  <div className="font-medium">
-                    {cleanChapterTitle(chapter.title)}
-                  </div>
-                  {chapter.description && (
-                    <div className="text-sm opacity-75 mt-1">
-                      {chapter.description.substring(0, 50)}...
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="absolute bottom-4 left-4 right-4">
-            <button
-              onClick={handleNewRepository}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded transition-colors"
-            >
-              New Repository
-            </button>
-          </div>
+    <div className="min-h-screen flex bg-gray-950 pt-12">
+      {/* Sidebar */}
+      <aside className="w-64 bg-gray-950 border-r border-gray-800 fixed inset-y-0 top-12 bottom-0 z-0">
+        <div className="py-4 px-4 border-b border-gray-800">
+          <h2 className="text-base font-medium text-gray-100 flex items-center">
+            <span className="mr-2 opacity-70">📂</span>
+            {docData.repo_url?.split("/").pop() || "Repository"}
+          </h2>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 ml-72">
-          <div className="max-w-4xl mx-auto p-8">
-            <div className="bg-gray-800 rounded-lg shadow-xl p-8 documentation-container">
-              <ReactMarkdown
-                components={markdownComponents}
-                remarkPlugins={[remarkGfm]}
-              >
-                {getCurrentContent()}
-              </ReactMarkdown>
+        <nav
+          className="p-3 space-y-3 overflow-auto"
+          style={{ height: "calc(100vh - 180px)" }}
+        >
+          <button
+            onClick={() => setPage("introduction")}
+            className={`w-full text-left px-4 py-3 rounded transition-colors duration-200 ${
+              page === "introduction"
+                ? "bg-gray-800 text-gray-100 border-l-4 border-purple-500"
+                : "text-gray-400 hover:bg-gray-800 hover:text-gray-100 hover:border-l-4 hover:border-purple-400"
+            }`}
+          >
+            <div className="font-medium flex items-center">
+              <span className="mr-2 opacity-70">📄</span>Introduction
             </div>
-          </div>
+          </button>
+
+          {chapterKeys.map((key) => {
+            const chap = docData.chapters[key];
+            return (
+              <button
+                key={key}
+                onClick={() => setPage(key)}
+                className={`w-full text-left px-4 py-3 rounded transition-colors duration-200 ${
+                  page === key
+                    ? "bg-gray-800 text-gray-100 border-l-4 border-purple-500"
+                    : "text-gray-400 hover:bg-gray-800 hover:text-gray-100 hover:border-l-4 hover:border-purple-400"
+                }`}
+              >
+                <div className="font-medium">{cleanTitle(chap.title)}</div>
+                {chap.description && (
+                  <div className="text-sm text-gray-500 mt-1 line-clamp-2">
+                    {chap.description}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-gray-950">
+          <button
+            onClick={() => {
+              localStorage.clear();
+              navigate("/");
+            }}
+            className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 py-3 rounded transition-colors font-medium hover:text-purple-300"
+          >
+            New Repository
+          </button>
         </div>
-      </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 ml-64 pt-6 px-8 pb-8 overflow-auto flex justify-center bg-gray-950">
+        <div className="prose prose-invert max-w-3xl w-full">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeSlug, rehypeAutolinkHeadings]}
+            components={markdownComponents}
+          >
+            {getContent()}
+          </ReactMarkdown>
+        </div>
+      </main>
     </div>
   );
 }
-
-export default DocumentationViewer;
