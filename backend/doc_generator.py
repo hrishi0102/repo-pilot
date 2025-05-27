@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, List, Optional
 from llm_client import llm_client
+from markdown_cleaner import markdown_cleaner
 import re
 
 logger = logging.getLogger(__name__)
@@ -33,77 +34,42 @@ class DocumentationGenerator:
         cleaned = re.sub(r'\*\*([^*]+)\*\*', r'\1', cleaned)  # Remove bold
         return cleaned.strip()
     
-    def _parse_chapter_structure(self, chapter_structure: str) -> List[Dict]:
-        """Parse chapter structure into clean format"""
-        chapters = []
-        lines = chapter_structure.split('\n')
-        
-        current_chapter = None
-        chapter_counter = 1
-        
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-                
-            # Check if this line looks like a chapter title
-            if (re.match(r'^#+\s+', line) or 
-                re.match(r'^\d+\.', line) or
-                re.match(r'^Chapter\s+\d+', line, re.IGNORECASE) or
-                any(keyword in line.lower() for keyword in ['chapter', 'overview', 'architecture', 'getting started', 'setup', 'contributing'])):
-                
-                if current_chapter:
-                    chapters.append(current_chapter)
-                
-                title = self._clean_chapter_title(line)
-                current_chapter = {
-                    'number': chapter_counter,
-                    'title': title,
-                    'description': ''
-                }
-                chapter_counter += 1
-            elif current_chapter and line:
-                # Add to description
-                current_chapter['description'] += line + ' '
-        
-        # Add the last chapter
-        if current_chapter:
-            chapters.append(current_chapter)
-        
-        # Ensure we have at least 3 chapters with good titles
-        if len(chapters) < 3:
-            default_chapters = [
-                {'number': 1, 'title': 'Getting Started & Overview', 'description': 'Introduction to the repository and setup guide'},
-                {'number': 2, 'title': 'Core Architecture & Components', 'description': 'Understanding the main components and architecture'},
-                {'number': 3, 'title': 'Key Workflows & Data Flow', 'description': 'How data flows through the system and main workflows'}
-            ]
-            chapters = default_chapters[:3]
-        
-        return chapters[:5]  # Max 5 chapters
-    
     async def generate_comprehensive_summary(self, content: str) -> Optional[str]:
         """Generate comprehensive summary of repository content"""
         truncated_content = self._truncate_content_if_needed(content)
         
         prompt = f"""
-Analyze this repository content and create a comprehensive, detailed summary that covers:
+You are creating documentation for developers. Output ONLY clean, properly formatted markdown.
 
-1. **Purpose & Overview**: What this repository does and its main goals
-2. **Architecture & Structure**: High-level architecture and how components are organized
-3. **Key Technologies**: Programming languages, frameworks, libraries used
-4. **Main Components**: Core modules, classes, and their responsibilities
-5. **Data Flow**: How data moves through the system
-6. **External Dependencies**: Third-party integrations and APIs
-7. **Configuration & Setup**: Important config files and setup requirements
+FORMATTING RULES:
+- Use proper markdown headings (# for h1, ## for h2, etc.)
+- Code blocks must use triple backticks with language identifier
+- Lists should use - for bullets or 1. for numbered
+- Bold text uses **text**
+- Links use [text](url)
+- NO raw HTML, NO mixed formatting
 
-Provide a detailed summary that would help someone new understand the entire codebase quickly.
+Analyze this repository and create a comprehensive summary:
 
 Repository Content:
 {truncated_content}
+
+Create a well-structured summary covering:
+1. Purpose & Overview
+2. Architecture & Structure  
+3. Key Technologies
+4. Main Components
+5. Data Flow
+6. External Dependencies
+7. Configuration & Setup
+
+Output clean markdown only. Start with # Repository Overview
 """
         
         result = await llm_client.generate_content(prompt)
-        logger.info("Generated comprehensive repository summary")
+        if result:
+            result = markdown_cleaner.clean_markdown(result)
+            logger.info("Generated and cleaned comprehensive repository summary")
         return result
     
     async def identify_abstractions(self, content: str) -> Optional[str]:
@@ -111,60 +77,79 @@ Repository Content:
         truncated_content = self._truncate_content_if_needed(content)
         
         prompt = f"""
-Analyze this ENTIRE codebase and identify the most important abstractions, components, modules, and concepts that a new contributor must understand to effectively contribute to this project.
+You are creating documentation for developers. Output ONLY clean, properly formatted markdown.
 
-Focus on identifying:
-- **Core Classes & Modules**: Main classes, functions, and modules that drive the application
-- **Architectural Patterns**: Design patterns, architectural styles used
-- **Key Data Structures**: Important data models, schemas, interfaces
-- **Business Logic Components**: Core functionality and business rules
-- **Integration Points**: APIs, databases, external services
-- **Configuration & Infrastructure**: Build systems, deployment, configuration
-
-Limit to the TOP 10-12 most critical abstractions that someone new needs to understand first.
-
-For each abstraction, provide:
-- Name and brief description
-- Location in codebase
-- Why it's important for new contributors
+Analyze this codebase and identify the TOP 10-12 most important abstractions.
 
 Repository Content:
 {truncated_content}
+
+Output format:
+# Key Abstractions
+
+## 1. [Abstraction Name]
+- **Description**: Brief description
+- **Location**: Where to find it
+- **Importance**: Why it matters
+
+## 2. [Next Abstraction]
+...
+
+Use proper markdown formatting. No HTML, no mixed formatting.
 """
                 
         result = await llm_client.generate_content(prompt)
-        logger.info("Identified key abstractions from full repository content")
+        if result:
+            result = markdown_cleaner.clean_markdown(result)
+            logger.info("Identified and cleaned key abstractions")
         return result
             
     async def analyze_relationships(self, abstractions: str, comprehensive_summary: str) -> Optional[str]:
         """Step 2: Analyze relationships using comprehensive summary"""
         prompt = f"""
-Based on these identified abstractions and the comprehensive repository summary, analyze the relationships and dependencies between core abstractions.
+You are creating documentation for developers. Output ONLY clean, properly formatted markdown.
+
+Based on these abstractions and summary, analyze component relationships:
 
 Key Abstractions:
 {abstractions}
 
-Comprehensive Repository Summary:
+Repository Summary:
 {comprehensive_summary}
 
-Create a relationship analysis that shows:
-- **Component Dependencies**: Which components depend on others and why
-- **Data Flow Patterns**: How data moves between different parts of the system
-- **Communication Patterns**: How different modules interact (function calls, events, APIs)
-- **Hierarchical Structure**: Parent-child relationships and system layers
-- **Critical Paths**: Main execution flows a new contributor should understand
+Create a relationship analysis with:
 
-Focus on relationships that are crucial for new contributors to understand the system architecture.
+# Component Relationships
+
+## Dependencies
+- Component A → Component B (reason)
+- ...
+
+## Data Flow
+1. Step-by-step data flow
+2. ...
+
+## Communication Patterns
+- Pattern description
+- ...
+
+Use proper markdown formatting. Code examples use ```language blocks.
 """
         
         result = await llm_client.generate_content(prompt)
-        logger.info("Analyzed component relationships")
+        if result:
+            result = markdown_cleaner.clean_markdown(result)
+            logger.info("Analyzed and cleaned component relationships")
         return result
     
     async def create_chapter_structure(self, abstractions: str, relationships: str) -> Optional[str]:
         """Step 3: Create structured chapter plan"""
         prompt = f"""
-Based on the abstractions and relationships, create EXACTLY 3 chapters for documentation that will help new contributors understand and contribute to this repository effectively.
+        This is used to figure out the most logical  order to teach the abstractions and relationships.Analyzes dependencies to determine what needs to be learned first.
+        Create a A sensible learning sequence that builds knowledge step by step. Start from foundational concepts, data flow, core abstractions, relatoinships, and finally the full system.
+        You are creating documentation for developers. Output ONLY clean, properly formatted markdown. Make a proper learning plan such that the developer understands the repository as a whole in a step by step fashion.
+
+Create 4-5 chapters based on:
 
 Abstractions:
 {abstractions}
@@ -172,104 +157,168 @@ Abstractions:
 Relationships:
 {relationships}
 
-For each chapter, you may provide:
-- Clear title starting with "Chapter X:"
-- Each code block should be BELOW 10 lines! If longer code blocks are needed, break them down into smaller pieces and walk through them one-by-one. Aggressively simplify the code to make it minimal.
-- 2-3 sentence description of what it covers
-- Each chapter should be self-contained and cover a distinct aspect of the repository.
-- Describe the internal implementation to help understand what's under the hood
-- Then dive deeper into code for the internal implementation with references to files. Provide example code blocks, but make them similarly simple and beginner-friendly
-- Why this order makes sense for new contributors
-- End the chapter with a brief conclusion that summarizes what was learned
+Output format:
+# Documentation Structure
 
-Focus on the most important aspects that enable fast-tracking repository understanding.
+## Chapter 1: [Title]
+Description of what this chapter covers...
+
+## Chapter 2: [Title]
+Description of what this chapter covers...
+
+## Chapter 3: [Title]
+Description of what this chapter covers...
+
+## Chapter n ...
+Description of what this chapter covers...
+
+Use clear, descriptive titles. No "Chapter X:" prefix needed.
 """
         
         result = await llm_client.generate_content(prompt)
-        logger.info("Created structured chapter plan")
+        if result:
+            result = markdown_cleaner.clean_markdown(result)
+            logger.info("Created and cleaned chapter structure")
         return result
     
     async def write_chapter(self, chapter_info: Dict, abstractions: str, relationships: str, comprehensive_summary: str, repo_url: str) -> Optional[str]:
         """Write detailed documentation for a single chapter"""
         prompt = f"""
-Write comprehensive documentation for Chapter {chapter_info['number']}: {chapter_info['title']}.
+You are writing Chapter {chapter_info['number']} of a technical tutorial. Output ONLY clean, well-structured markdown.
 
-Repository: {repo_url}
+Your job is to clearly explain this part of the system to junior developers in a way that is beginner-friendly, yet thorough. 
+Use everything available: the abstractions, relationships, and previously written content. Treat this as a guided code walkthrough.
 
-Chapter Information:
-- Title: {chapter_info['title']}
-- Description: {chapter_info['description']}
+FORMATTING RULES:
+1. Start with # {chapter_info['title']}
+2. Use ## for major sections, ### for subsections
+3. Code blocks must use ```language syntax
+4. Keep code examples under 10 lines each
+5. Use - for bullet lists, 1. for numbered lists
+6. Bold important terms with **text**
+7. NO HTML, NO raw formatting
 
-Available Context:
-Key Abstractions: {abstractions}
-Component Relationships: {relationships}
-Repository Summary: {comprehensive_summary}
+Chapter: {chapter_info['title']}
+Description: {chapter_info['description']}
 
-Write detailed documentation for this chapter that includes:
-- **Clear explanations** of concepts covered in this chapter
-- **Code examples** with explanations where relevant (keep code blocks under 10 lines each)
-- **Step-by-step guides** where appropriate
-- **Practical guidance** for new contributors
-- **Links between concepts** and how they fit in the bigger picture
-- **Common patterns** and best practices shown in the code
-- **Troubleshooting tips** for common issues in this area
+Context:
+-Repository: {repo_url}
+-Summary: {comprehensive_summary}
+-Abstractions (functions, classes, components): {abstractions}
+-Relationships (calls, imports, dependencies): {relationships}
 
-Format in clean markdown with:
-- Proper headers (##, ###)
-- Code blocks with language specification
-- Lists and tables where helpful
-- Clear section divisions
+TASK:
+1. Begin with a short introduction to this chapter: what its about and why it matters.
+2. Use the **abstractions** to show what code is involved in this step.
+3. Use the **relationships** to explain how this code connects with other parts of the system (e.g., which modules call it, or what it depends on).
+4. Walk through the logic step by step. Explain things like:
+   - What each file/function/class does
+   - How the data flows
+   - Why its structured this way
+5. Show **small code snippets** to illustrate key pieces. Prefer real examples from the codebase.
+6. Explain any tricky or interesting logic clearly.
+7. Finish with a brief summary and possibly a “Whats Next” section that previews the next chapter.
 
-Make this chapter comprehensive enough that someone reading it can understand this aspect of the repository thoroughly.
+Write as if you're teaching a junior dev sitting beside you. Assume they know basic Python/JS/etc., but not the codebase.
+
+Write comprehensive documentation including:
+- Clear explanations
+- Code examples (properly formatted)
+- Step-by-step guides
+- Best practices
+- Common patterns
+
+Output clean markdown only. Start with the chapter title as # heading.
 """
         
         result = await llm_client.generate_content(prompt)
-        logger.info(f"Generated detailed chapter {chapter_info['number']} documentation")
+        if result:
+            result = markdown_cleaner.clean_markdown(result)
+            # Ensure chapter starts with proper heading
+            if not result.strip().startswith('#'):
+                result = f"# {chapter_info['title']}\n\n{result}"
+            logger.info(f"Generated and cleaned chapter {chapter_info['number']}")
         return result
     
     async def create_introduction(self, comprehensive_summary: str, abstractions: str, repo_url: str) -> Optional[str]:
-        """Create comprehensive introduction page"""
+        """Create comprehensive detailed introduction page"""
         prompt = f"""
-Create a comprehensive introduction page for new contributors to this repository.
+You are creating the introduction page for technical documentation. Output ONLY clean, properly formatted markdown.
 
 Repository: {repo_url}
-Repository Summary: {comprehensive_summary}
-Key Abstractions: {abstractions}
+Summary: {comprehensive_summary}
+Abstractions: {abstractions}
 
-Create an introduction that includes:
+Create an introduction with these sections:
 
-## Introduction
-- What this repository does
-- Who should use this guide
-- What you'll learn from this documentation
+# Introduction
 
-## Quick Start Overview
-- High-level architecture summary
-- Key technologies and frameworks used
-- Prerequisites for contributing
+## Overview
+What this repository does and who should use it...
+
+## Quick Start
+Basic setup steps...
 
 ## Repository Structure
-- Main directories and their purposes
-- Important files new contributors should know about
-- How the codebase is organized
+```
+folder/
+  subfolder/
+    file.ext
+```
 
-## How to Use This Guide
-- What each chapter covers
-- Recommended reading order
-- How to get help
+## Prerequisites
+- Required software
+- Knowledge needed
 
-## Getting Started Checklist
-- Setup requirements
-- Installation steps
-- How to run the project locally
-- How to verify your setup works
+## Getting Started
+1. Step one
+2. Step two
+...
 
-Format in clean markdown that serves as a welcoming entry point for new contributors.
+Output clean markdown only. Use proper headings, code blocks, and lists.
 """
         
         result = await llm_client.generate_content(prompt)
-        logger.info("Created comprehensive introduction")
+        if result:
+            result = markdown_cleaner.clean_markdown(result)
+            logger.info("Created and cleaned introduction")
         return result
+    
+    def _parse_chapter_structure(self, chapter_structure: str) -> List[Dict]:
+        """Parse chapter structure into clean format"""
+        chapters = []
+        
+        # Use regex to find all chapter headings
+        chapter_pattern = re.compile(r'^##\s+(?:Chapter\s+\d+:\s*)?(.+?)$', re.MULTILINE)
+        matches = list(chapter_pattern.finditer(chapter_structure))
+        
+        for i, match in enumerate(matches):
+            title = self._clean_chapter_title(match.group(1))
+            
+            # Extract description - text between this heading and the next
+            start = match.end()
+            end = matches[i + 1].start() if i + 1 < len(matches) else len(chapter_structure)
+            description = chapter_structure[start:end].strip()
+            
+            # Clean description - remove extra whitespace and take first paragraph
+            description_lines = [line.strip() for line in description.split('\n') if line.strip()]
+            description = ' '.join(description_lines[:3])  # Take first 3 lines max
+            
+            chapters.append({
+                'number': i + 1,
+                'title': title,
+                'description': description[:200] + '...' if len(description) > 200 else description
+            })
+        
+        # Fallback if no chapters found
+        if not chapters:
+            chapters = [
+                {'number': 1, 'title': 'Getting Started & Overview', 'description': 'Introduction to the repository and setup guide'},
+                {'number': 2, 'title': 'Core Architecture & Components', 'description': 'Understanding the main components and architecture'},
+                {'number': 3, 'title': 'Key Workflows & Implementation', 'description': 'How the system works and implementation details'}
+            ]
+        
+        return chapters[:3]  # Limit to 3 chapters
     
     async def generate_full_documentation(self, repo_url: str, summary: str, tree: str, content: str) -> Dict:
         """Main method that orchestrates the entire documentation generation process"""
@@ -327,6 +376,11 @@ Format in clean markdown that serves as a welcoming entry point for new contribu
                 )
                 
                 if chapter_content:
+                    # Validate the chapter content
+                    validation = markdown_cleaner.validate_markdown(chapter_content)
+                    if validation['cleaned']:
+                        logger.warning(f"Chapter {chapter_info['number']} had markdown issues: {validation['issues']}")
+                    
                     chapters[chapter_key] = {
                         "number": chapter_info['number'],
                         "title": chapter_info['title'],
