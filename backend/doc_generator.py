@@ -77,9 +77,13 @@ Output clean markdown only. Start with # Repository Overview
         truncated_content = self._truncate_content_if_needed(content)
         
         prompt = f"""
-You are creating documentation for developers. Output ONLY clean, properly formatted markdown.
+Analyze the codebase/repository context.
+Identify the top 5-10 core most important abstractions to help those new to the codebase.
 
-Analyze this codebase and identify the TOP 10-12 most important abstractions.
+For each abstraction, provide:
+1. A concise name
+2. A beginner-friendly description explaining what it is with a simple analogy, in around 100 words.
+Output ONLY clean, properly formatted markdown.
 
 Repository Content:
 {truncated_content}
@@ -109,7 +113,7 @@ Use proper markdown formatting. No HTML, no mixed formatting.
         prompt = f"""
 You are creating documentation for developers. Output ONLY clean, properly formatted markdown.
 
-Based on these abstractions and summary, analyze component relationships:
+Based on the following abstractions and relevant code snippets from the project, analyze component relationships:
 
 Key Abstractions:
 {abstractions}
@@ -117,6 +121,16 @@ Key Abstractions:
 Repository Summary:
 {comprehensive_summary}
 
+Please provide:
+1. A high-level summary of the project's main purpose and functionality in a few beginner-friendly sentences. Use markdown formatting with **bold** and *italic* text to highlight important concepts.
+2. A list (relationships) describing the key interactions between these abstractions. For each relationship, specify:
+    - from_abstraction: Index of the source abstraction (e.g., `0 # AbstractionName1`)
+    - to_abstraction: Index of the target abstraction (e.g., `1 # AbstractionName2`)
+    - label: A brief label for the interaction **in just a few words** (e.g., "Manages", "Inherits", "Uses").
+    Ideally the relationship should be backed by one abstraction calling or passing parameters to another.
+    Simplify the relationship and exclude those non-important ones.
+
+IMPORTANT: Make sure EVERY abstraction is involved in at least ONE relationship (either as source or target). Each abstraction index must appear at least once across all relationships.
 Create a relationship analysis with:
 
 # Component Relationships
@@ -211,13 +225,15 @@ TASK:
 1. Begin with a short introduction to this chapter: what its about and why it matters.
 2. Use the **abstractions** to show what code is involved in this step.
 3. Use the **relationships** to explain how this code connects with other parts of the system (e.g., which modules call it, or what it depends on).
-4. Walk through the logic step by step. Explain things like:
+4. If the abstraction is complex, break it down into key concepts. Explain each concept one-by-one in a very beginner-friendly way
+5. Each code block should be BELOW 20 lines! If longer code blocks are needed, break them down into smaller pieces and walk through them one-by-one. Aggresively simplify the code to make it minimal. Use comments to skip non-important implementation details. Each code block should have a beginner friendly explanation right after it
+6. Walk through the logic step by step. Explain things like:
    - What each file/function/class does
    - How the data flows
    - Why its structured this way
-5. Show **small code snippets** to illustrate key pieces. Prefer real examples from the codebase.
-6. Explain any tricky or interesting logic clearly.
-7. Finish with a brief summary and possibly a “Whats Next” section that previews the next chapter.
+7. Show **small code snippets** to illustrate key pieces. Prefer real examples from the codebase.
+8. Explain any tricky or interesting logic clearly.
+9. Finish with a brief summary and possibly a “Whats Next” section that previews the next chapter.
 
 Write as if you're teaching a junior dev sitting beside you. Assume they know basic Python/JS/etc., but not the codebase.
 
