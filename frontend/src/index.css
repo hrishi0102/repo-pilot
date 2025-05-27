@@ -2,204 +2,273 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Enhanced prose styling for clean, minimalistic documentation */
-.prose {
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #000000;
+  color: #e5e7eb;
+}
+
+/* Documentation content container */
+.documentation-content {
   max-width: none;
-  line-height: 1.6;
-  color: #e5e7eb;
-}
-
-.prose h1 {
-  color: #ffffff;
-  font-size: 1.875rem; /* Reduced from 2.5rem */
-  font-weight: 700;
-  margin-top: 0;
-  margin-bottom: 1.5rem; /* Reduced spacing */
-  border-bottom: 2px solid #4b5563;
-  padding-bottom: 0.75rem;
-}
-
-.prose h2 {
-  color: #f3f4f6;
-  font-size: 1.5rem; /* Reduced from 2rem */
-  font-weight: 600;
-  margin-top: 2rem; /* Reduced spacing */
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #6b7280;
-  padding-bottom: 0.5rem;
-}
-
-.prose h3 {
-  color: #f9fafb;
-  font-size: 1.25rem; /* Reduced from 1.625rem */
-  font-weight: 600;
-  margin-top: 1.5rem; /* Reduced spacing */
-  margin-bottom: 0.75rem;
-}
-
-.prose h4 {
-  color: #f3f4f6;
-  font-size: 1.125rem; /* Reduced from 1.375rem */
-  font-weight: 500;
-  margin-top: 1.25rem; /* Reduced spacing */
-  margin-bottom: 0.75rem;
-}
-
-.prose p {
+  line-height: 1.75;
   color: #d1d5db;
-  margin-bottom: 1rem; /* Reduced from 1.75rem */
-  line-height: 1.6;
-  font-size: 0.875rem; /* Smaller base text */
+  font-size: 16px;
 }
 
-.prose strong {
-  color: #ffffff;
-  font-weight: 600;
+/* Remove default prose styles that might conflict */
+.documentation-content * {
+  margin: 0;
+  padding: 0;
 }
 
-.prose em {
-  color: #e5e7eb;
-  font-style: italic;
+/* Headings */
+.documentation-content h1 {
+  color: #ffffff !important;
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  margin: 0 0 2rem 0 !important;
+  padding-bottom: 1rem !important;
+  border-bottom: 3px solid #3b82f6 !important;
+  line-height: 1.2 !important;
 }
 
-.prose ul,
-.prose ol {
-  color: #d1d5db;
-  margin: 1rem 0; /* Reduced spacing */
-  padding-left: 1.5rem;
-  font-size: 0.875rem; /* Consistent smaller text */
+.documentation-content h2 {
+  color: #f3f4f6 !important;
+  font-size: 2rem !important;
+  font-weight: 600 !important;
+  margin: 3rem 0 1.5rem 0 !important;
+  padding-bottom: 0.75rem !important;
+  border-bottom: 2px solid #6b7280 !important;
+  line-height: 1.3 !important;
 }
 
-.prose li {
-  margin: 0.5rem 0; /* Reduced spacing */
-  line-height: 1.6;
+.documentation-content h3 {
+  color: #f9fafb !important;
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  margin: 2.5rem 0 1rem 0 !important;
+  line-height: 1.4 !important;
 }
 
-.prose li > ul,
-.prose li > ol {
-  margin: 0.5rem 0; /* Reduced spacing */
+.documentation-content h4 {
+  color: #f3f4f6 !important;
+  font-size: 1.25rem !important;
+  font-weight: 500 !important;
+  margin: 2rem 0 1rem 0 !important;
+  line-height: 1.5 !important;
 }
 
-.prose blockquote {
-  border-left: 3px solid #3b82f6;
-  background: rgba(59, 130, 246, 0.06);
-  padding: 1rem; /* Reduced padding */
-  margin: 1.5rem 0; /* Reduced spacing */
-  font-style: italic;
-  color: #cbd5e1;
-  border-radius: 0 0.375rem 0.375rem 0;
-  font-size: 0.875rem;
+.documentation-content h5 {
+  color: #e5e7eb !important;
+  font-size: 1.125rem !important;
+  font-weight: 500 !important;
+  margin: 1.5rem 0 0.75rem 0 !important;
 }
 
-.prose pre {
-  background: #1a1a1a;
-  border: 1px solid #333333;
-  border-radius: 0.5rem;
-  padding: 1rem; /* Reduced padding */
-  margin: 1.5rem 0; /* Reduced spacing */
-  overflow-x: auto;
-  font-size: 0.8rem; /* Smaller code text */
+.documentation-content h6 {
+  color: #d1d5db !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  margin: 1.5rem 0 0.75rem 0 !important;
 }
 
-.prose code:not(pre code) {
-  background: #374151;
-  color: #fcd34d;
-  padding: 0.25rem 0.5rem; /* Reduced padding */
-  border-radius: 0.375rem;
-  font-size: 0.8rem; /* Smaller inline code */
-  font-weight: 500;
-  border: 1px solid #4b5563;
+/* Paragraphs */
+.documentation-content p {
+  color: #d1d5db !important;
+  margin-bottom: 1.5rem !important;
+  line-height: 1.75 !important;
+  font-size: 16px !important;
 }
 
-.prose table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 1.5rem 0; /* Reduced spacing */
-  font-size: 0.875rem; /* Smaller table text */
-  border-radius: 0.5rem;
-  overflow: hidden;
-  border: 1px solid #4b5563;
+/* Text formatting */
+.documentation-content strong {
+  color: #ffffff !important;
+  font-weight: 600 !important;
 }
 
-.prose th,
-.prose td {
-  padding: 0.75rem; /* Reduced padding */
-  border: 1px solid #4b5563;
-  text-align: left;
+.documentation-content em {
+  color: #06b6d4 !important;
+  font-style: italic !important;
 }
 
-.prose th {
-  background: #1f2937;
-  font-weight: 600;
-  color: #ffffff;
-  font-size: 0.8rem; /* Smaller header text */
+/* Lists */
+.documentation-content ul,
+.documentation-content ol {
+  color: #d1d5db !important;
+  margin: 1.5rem 0 !important;
+  padding-left: 2rem !important;
+  font-size: 16px !important;
 }
 
-.prose td {
-  background: rgba(17, 24, 39, 0.5);
-  color: #d1d5db;
+.documentation-content li {
+  margin: 0.75rem 0 !important;
+  line-height: 1.75 !important;
 }
 
-.prose a {
-  color: #60a5fa;
-  text-decoration: underline;
-  text-decoration-color: rgba(96, 165, 250, 0.4);
-  transition: all 0.2s ease;
+.documentation-content ul > li::marker {
+  color: #60a5fa !important;
 }
 
-.prose a:hover {
-  color: #93c5fd;
-  text-decoration-color: rgba(147, 197, 253, 0.6);
+.documentation-content ol > li::marker {
+  color: #60a5fa !important;
+  font-weight: 600 !important;
 }
 
-/* Custom scrollbar for dark theme */
-.prose::-webkit-scrollbar {
-  width: 8px;
+/* Nested lists */
+.documentation-content li > ul,
+.documentation-content li > ol {
+  margin: 0.75rem 0 !important;
 }
 
-.prose::-webkit-scrollbar-track {
-  background: #1f2937;
-  border-radius: 4px;
+/* Blockquotes */
+.documentation-content blockquote {
+  border-left: 4px solid #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+  padding: 1.5rem 2rem !important;
+  margin: 2rem 0 !important;
+  font-style: italic !important;
+  color: #cbd5e1 !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+  font-size: 16px !important;
+  position: relative !important;
 }
 
-.prose::-webkit-scrollbar-thumb {
-  background: #4b5563;
-  border-radius: 4px;
+/* Code blocks */
+.documentation-content pre {
+  background: #0f172a !important;
+  border: 1px solid #334155 !important;
+  border-radius: 0.75rem !important;
+  padding: 0 !important;
+  margin: 2rem 0 !important;
+  overflow: hidden !important;
+  font-size: 14px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
 }
 
-.prose::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+.documentation-content pre > div {
+  margin: 0 !important;
+  border-radius: 0 !important;
 }
 
-/* Improved spacing for minimalistic look */
-.prose > * + * {
-  margin-top: 1rem; /* Reduced spacing */
+/* Inline code */
+.documentation-content code:not(pre code) {
+  background: #1e293b !important;
+  color: #06b6d4 !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.375rem !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border: 1px solid #475569 !important;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace !important;
 }
 
-.prose > h1 + *,
-.prose > h2 + *,
-.prose > h3 + * {
-  margin-top: 0.75rem; /* Reduced spacing */
+/* Remove quote marks from inline code */
+.documentation-content code:not(pre code)::before,
+.documentation-content code:not(pre code)::after {
+  content: none !important;
 }
 
-/* Enhanced list styling for dark theme */
-.prose ul > li::marker {
-  color: #60a5fa;
+/* Tables */
+.documentation-content table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin: 2rem 0 !important;
+  font-size: 15px !important;
+  border-radius: 0.75rem !important;
+  overflow: hidden !important;
+  border: 1px solid #475569 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
 }
 
-.prose ol > li::marker {
-  color: #60a5fa;
-  font-weight: 600;
+.documentation-content th,
+.documentation-content td {
+  padding: 1rem 1.5rem !important;
+  border: 1px solid #475569 !important;
+  text-align: left !important;
 }
 
-/* Checkbox styling for task lists */
-.prose input[type="checkbox"] {
-  margin-right: 0.5rem;
-  accent-color: #3b82f6;
-  transform: scale(1.1);
+.documentation-content th {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
 }
 
-/* Line clamp utility for sidebar */
+.documentation-content td {
+  background: rgba(15, 23, 42, 0.6) !important;
+  color: #d1d5db !important;
+}
+
+.documentation-content tbody tr:hover td {
+  background: rgba(15, 23, 42, 0.8) !important;
+}
+
+/* Links */
+.documentation-content a {
+  color: #60a5fa !important;
+  text-decoration: underline !important;
+  text-decoration-color: rgba(96, 165, 250, 0.4) !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 3px !important;
+  transition: all 0.2s ease !important;
+  font-weight: 500 !important;
+}
+
+.documentation-content a:hover {
+  color: #93c5fd !important;
+  text-decoration-color: rgba(147, 197, 253, 0.8) !important;
+  text-shadow: 0 0 8px rgba(96, 165, 250, 0.3) !important;
+}
+
+/* Images */
+.documentation-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 0.5rem !important;
+  margin: 2rem 0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Horizontal rules */
+.documentation-content hr {
+  border: none !important;
+  height: 2px !important;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #475569,
+    transparent
+  ) !important;
+  margin: 3rem 0 !important;
+}
+
+/* Task lists */
+.documentation-content input[type="checkbox"] {
+  margin-right: 0.75rem !important;
+  accent-color: #3b82f6 !important;
+  transform: scale(1.2) !important;
+}
+
+.documentation-content li input[type="checkbox"] {
+  margin-left: -2rem !important;
+  margin-right: 0.75rem !important;
+}
+
+/* Line clamping utilities */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -212,4 +281,64 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Focus states */
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+}
+
+/* Smooth transitions */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .documentation-content {
+    font-size: 15px;
+  }
+
+  .documentation-content h1 {
+    font-size: 2rem !important;
+  }
+
+  .documentation-content h2 {
+    font-size: 1.75rem !important;
+  }
+
+  .documentation-content h3 {
+    font-size: 1.375rem !important;
+  }
+
+  .documentation-content table {
+    font-size: 14px !important;
+  }
+
+  .documentation-content th,
+  .documentation-content td {
+    padding: 0.75rem 1rem !important;
+  }
 }

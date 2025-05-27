@@ -1,20 +1,20 @@
 import logging
 from typing import Dict, List, Optional
 from llm_client import llm_client
+import re
 
 logger = logging.getLogger(__name__)
 
 class DocumentationGenerator:
     
     def __init__(self):
-        self.max_content_length = 1000000  # Increased for full content
+        self.max_content_length = 750000
     
     def _truncate_content_if_needed(self, content: str) -> str:
         """Truncate only if absolutely necessary"""
         if len(content) <= self.max_content_length:
             return content
         
-        # Smart truncation - keep important parts
         half_length = self.max_content_length // 2
         truncated = (
             content[:half_length] + 
@@ -23,6 +23,63 @@ class DocumentationGenerator:
         )
         logger.warning(f"Content truncated from {len(content)} to {len(truncated)} chars")
         return truncated
+    
+    def _clean_chapter_title(self, title: str) -> str:
+        """Clean and normalize chapter titles"""
+        # Remove markdown formatting and numbering
+        cleaned = re.sub(r'^#+\s*', '', title.strip())
+        cleaned = re.sub(r'^\d+\.\s*', '', cleaned)
+        cleaned = re.sub(r'^Chapter\s+\d+:?\s*', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\*\*([^*]+)\*\*', r'\1', cleaned)  # Remove bold
+        return cleaned.strip()
+    
+    def _parse_chapter_structure(self, chapter_structure: str) -> List[Dict]:
+        """Parse chapter structure into clean format"""
+        chapters = []
+        lines = chapter_structure.split('\n')
+        
+        current_chapter = None
+        chapter_counter = 1
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Check if this line looks like a chapter title
+            if (re.match(r'^#+\s+', line) or 
+                re.match(r'^\d+\.', line) or
+                re.match(r'^Chapter\s+\d+', line, re.IGNORECASE) or
+                any(keyword in line.lower() for keyword in ['chapter', 'overview', 'architecture', 'getting started', 'setup', 'contributing'])):
+                
+                if current_chapter:
+                    chapters.append(current_chapter)
+                
+                title = self._clean_chapter_title(line)
+                current_chapter = {
+                    'number': chapter_counter,
+                    'title': title,
+                    'description': ''
+                }
+                chapter_counter += 1
+            elif current_chapter and line:
+                # Add to description
+                current_chapter['description'] += line + ' '
+        
+        # Add the last chapter
+        if current_chapter:
+            chapters.append(current_chapter)
+        
+        # Ensure we have at least 3 chapters with good titles
+        if len(chapters) < 3:
+            default_chapters = [
+                {'number': 1, 'title': 'Getting Started & Overview', 'description': 'Introduction to the repository and setup guide'},
+                {'number': 2, 'title': 'Core Architecture & Components', 'description': 'Understanding the main components and architecture'},
+                {'number': 3, 'title': 'Key Workflows & Data Flow', 'description': 'How data flows through the system and main workflows'}
+            ]
+            chapters = default_chapters[:3]
+        
+        return chapters[:5]  # Max 5 chapters
     
     async def generate_comprehensive_summary(self, content: str) -> Optional[str]:
         """Generate comprehensive summary of repository content"""
@@ -51,7 +108,8 @@ Repository Content:
     
     async def identify_abstractions(self, content: str) -> Optional[str]:
         """Step 1: Identify key abstractions using FULL repo content"""
-        # Use full content as requested
+        truncated_content = self._truncate_content_if_needed(content)
+        
         prompt = f"""
 Analyze this ENTIRE codebase and identify the most important abstractions, components, modules, and concepts that a new contributor must understand to effectively contribute to this project.
 
@@ -70,18 +128,18 @@ For each abstraction, provide:
 - Location in codebase
 - Why it's important for new contributors
 
-Full Repository Content:
-{content}
+Repository Content:
+{truncated_content}
 """
-        
+                
         result = await llm_client.generate_content(prompt)
         logger.info("Identified key abstractions from full repository content")
         return result
-    
+            
     async def analyze_relationships(self, abstractions: str, comprehensive_summary: str) -> Optional[str]:
         """Step 2: Analyze relationships using comprehensive summary"""
         prompt = f"""
-Based on these identified abstractions and the comprehensive repository summary, analyze the relationships and dependencies between components.
+Based on these identified abstractions and the comprehensive repository summary, analyze the relationships and dependencies between core abstractions.
 
 Key Abstractions:
 {abstractions}
@@ -103,10 +161,10 @@ Focus on relationships that are crucial for new contributors to understand the s
         logger.info("Analyzed component relationships")
         return result
     
-    async def order_chapters(self, abstractions: str, relationships: str) -> Optional[str]:
-        """Step 3: Create 4-5 chapter structure based on importance"""
+    async def create_chapter_structure(self, abstractions: str, relationships: str) -> Optional[str]:
+        """Step 3: Create structured chapter plan"""
         prompt = f"""
-Based on the abstractions and relationships, create a logical 4-5 chapter structure for documentation that will help new contributors understand and contribute to this repository effectively.
+Based on the abstractions and relationships, create EXACTLY 3 chapters for documentation that will help new contributors understand and contribute to this repository effectively.
 
 Abstractions:
 {abstractions}
@@ -114,35 +172,33 @@ Abstractions:
 Relationships:
 {relationships}
 
-Create exactly 4-5 chapters that follow this learning progression:
-1. **Getting Started & Overview** (always first)
-2. **Core Architecture & Components**
-3. **Key Workflows & Data Flow**
-4. **Integration & External Dependencies**
-5. **Contributing Guidelines & Development Setup** (if needed)
-
-For each chapter, specify:
-- Chapter number and title
-- What topics it covers
+For each chapter, you may provide:
+- Clear title starting with "Chapter X:"
+- Each code block should be BELOW 10 lines! If longer code blocks are needed, break them down into smaller pieces and walk through them one-by-one. Aggressively simplify the code to make it minimal.
+- 2-3 sentence description of what it covers
+- Each chapter should be self-contained and cover a distinct aspect of the repository.
+- Describe the internal implementation to help understand what's under the hood
+- Then dive deeper into code for the internal implementation with references to files. Provide example code blocks, but make them similarly simple and beginner-friendly
 - Why this order makes sense for new contributors
-- Key learning objectives
+- End the chapter with a brief conclusion that summarizes what was learned
 
-Focus on the most important and relevant aspects that enable fast-tracking repository understanding.
+Focus on the most important aspects that enable fast-tracking repository understanding.
 """
         
         result = await llm_client.generate_content(prompt)
-        logger.info("Created chapter ordering (4-5 chapters)")
+        logger.info("Created structured chapter plan")
         return result
     
-    async def write_chapter(self, chapter_info: str, abstractions: str, relationships: str, comprehensive_summary: str, repo_url: str) -> Optional[str]:
+    async def write_chapter(self, chapter_info: Dict, abstractions: str, relationships: str, comprehensive_summary: str, repo_url: str) -> Optional[str]:
         """Write detailed documentation for a single chapter"""
         prompt = f"""
-Write comprehensive documentation for this specific chapter of the repository guide.
+Write comprehensive documentation for Chapter {chapter_info['number']}: {chapter_info['title']}.
 
 Repository: {repo_url}
 
-Chapter to Write:
-{chapter_info}
+Chapter Information:
+- Title: {chapter_info['title']}
+- Description: {chapter_info['description']}
 
 Available Context:
 Key Abstractions: {abstractions}
@@ -151,8 +207,8 @@ Repository Summary: {comprehensive_summary}
 
 Write detailed documentation for this chapter that includes:
 - **Clear explanations** of concepts covered in this chapter
-- **Code examples** with explanations where relevant
-- **Visual representations** in text/ASCII format for complex concepts
+- **Code examples** with explanations where relevant (keep code blocks under 10 lines each)
+- **Step-by-step guides** where appropriate
 - **Practical guidance** for new contributors
 - **Links between concepts** and how they fit in the bigger picture
 - **Common patterns** and best practices shown in the code
@@ -168,7 +224,7 @@ Make this chapter comprehensive enough that someone reading it can understand th
 """
         
         result = await llm_client.generate_content(prompt)
-        logger.info(f"Generated detailed chapter documentation")
+        logger.info(f"Generated detailed chapter {chapter_info['number']} documentation")
         return result
     
     async def create_introduction(self, comprehensive_summary: str, abstractions: str, repo_url: str) -> Optional[str]:
@@ -182,10 +238,8 @@ Key Abstractions: {abstractions}
 
 Create an introduction that includes:
 
-# Repository Guide for New Contributors
-
-## Welcome & Purpose
-- What this repository does and why it exists
+## Introduction
+- What this repository does
 - Who should use this guide
 - What you'll learn from this documentation
 
@@ -240,29 +294,32 @@ Format in clean markdown that serves as a welcoming entry point for new contribu
             if not relationships:
                 return {"error": "Failed to analyze relationships"}
             
-            # Step 4: Order chapters (4-5 chapters)
-            logger.info("Step 4: Creating chapter structure...")
-            chapter_structure = await self.order_chapters(abstractions, relationships)
-            if not chapter_structure:
+            # Step 4: Create structured chapter plan
+            logger.info("Step 4: Creating structured chapter plan...")
+            raw_chapter_structure = await self.create_chapter_structure(abstractions, relationships)
+            if not raw_chapter_structure:
                 return {"error": "Failed to create chapter structure"}
             
-            # Step 5: Create introduction
-            logger.info("Step 5: Creating introduction...")
+            # Step 5: Parse chapter structure
+            logger.info("Step 5: Parsing chapter structure...")
+            parsed_chapters = self._parse_chapter_structure(raw_chapter_structure)
+            
+            # Step 6: Create introduction
+            logger.info("Step 6: Creating introduction...")
             introduction = await self.create_introduction(comprehensive_summary, abstractions, repo_url)
             if not introduction:
                 return {"error": "Failed to create introduction"}
             
-            # Step 6: Write individual chapters (parse chapter structure and write each)
-            logger.info("Step 6: Writing individual chapters...")
+            # Step 7: Write individual chapters
+            logger.info("Step 7: Writing individual chapters...")
             chapters = {}
             
-            # Simple parsing of chapters (assuming numbered format)
-            chapter_lines = [line.strip() for line in chapter_structure.split('\n') if line.strip() and ('Chapter' in line or any(char.isdigit() for char in line[:3]))]
-            
-            for i, chapter_line in enumerate(chapter_lines[:5], 1):  # Limit to 5 chapters
-                logger.info(f"Writing Chapter {i}: {chapter_line[:50]}...")
+            for chapter_info in parsed_chapters:
+                chapter_key = f"chapter_{chapter_info['number']}"
+                logger.info(f"Writing Chapter {chapter_info['number']}: {chapter_info['title']}")
+                
                 chapter_content = await self.write_chapter(
-                    chapter_info=chapter_line,
+                    chapter_info=chapter_info,
                     abstractions=abstractions,
                     relationships=relationships,
                     comprehensive_summary=comprehensive_summary,
@@ -270,12 +327,14 @@ Format in clean markdown that serves as a welcoming entry point for new contribu
                 )
                 
                 if chapter_content:
-                    chapters[f"chapter_{i}"] = {
-                        "title": chapter_line,
-                        "content": chapter_content
+                    chapters[chapter_key] = {
+                        "number": chapter_info['number'],
+                        "title": chapter_info['title'],
+                        "content": chapter_content,
+                        "description": chapter_info['description'].strip()
                     }
                 else:
-                    logger.warning(f"Failed to generate Chapter {i}")
+                    logger.warning(f"Failed to generate Chapter {chapter_info['number']}")
             
             if not chapters:
                 return {"error": "Failed to generate any chapters"}
@@ -291,7 +350,7 @@ Format in clean markdown that serves as a welcoming entry point for new contribu
                     "comprehensive_summary": comprehensive_summary,
                     "abstractions": abstractions,
                     "relationships": relationships,
-                    "chapter_structure": chapter_structure,
+                    "raw_chapter_structure": raw_chapter_structure,
                     "total_chapters": len(chapters)
                 }
             }

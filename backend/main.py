@@ -134,7 +134,7 @@ async def generate_documentation(request: DocsRequest):
                 "total_chapters": result["metadata"]["total_chapters"],
                 "comprehensive_summary": result["metadata"]["comprehensive_summary"][:300] + "...",
                 "abstractions_preview": result["metadata"]["abstractions"][:200] + "...",
-                "chapter_structure": result["metadata"]["chapter_structure"]
+                "raw_chapter_structure": result["metadata"]["raw_chapter_structure"]
             }
         }
         

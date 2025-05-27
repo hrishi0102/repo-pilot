@@ -122,7 +122,7 @@ function GenerationPage() {
               <button
                 onClick={handleGenerateDocumentation}
                 disabled={loading}
-                className="bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-xl px-8 py-4 text-lg transition disabled:bg-gray-900 disabled:cursor-not-allowed"
+                className="bg-green-900 hover:bg-green-700 text-white font-semibold rounded-xl px-8 py-4 text-lg transition disabled:bg-gray-900 disabled:cursor-not-allowed"
               >
                 Generate Documentation
               </button>

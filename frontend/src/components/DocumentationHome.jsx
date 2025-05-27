@@ -124,7 +124,7 @@ function DocumentationHome() {
             <button
               onClick={handleGenerateDocumentation}
               disabled={loading}
-              className="bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg px-6 py-3 transition disabled:bg-gray-800 disabled:cursor-not-allowed flex items-center gap-3"
+              className="bg-green-700 hover:bg-green-600 text-white font-medium rounded-lg px-6 py-3 transition disabled:bg-gray-800 disabled:cursor-not-allowed flex items-center gap-3"
             >
               {loading ? (
                 <>
