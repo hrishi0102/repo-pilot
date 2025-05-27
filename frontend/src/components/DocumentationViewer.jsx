@@ -4,7 +4,6 @@ import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
 
 function DocumentationViewer() {
   const [documentationData, setDocumentationData] = useState(null);
@@ -61,13 +60,25 @@ function DocumentationViewer() {
         // Handle code blocks
         const language = match?.[1] || "text";
 
+        // Don't show syntax highlighter UI for plain text
+        if (language === "text" || language === "TEXT") {
+          return (
+            <pre className="bg-slate-900 text-gray-300 p-4 rounded-lg overflow-x-auto my-4 border border-gray-700">
+              <code>{codeString}</code>
+            </pre>
+          );
+        }
+
         return (
-          <div className="my-6 rounded-lg overflow-hidden border border-gray-600 shadow-lg">
-            <div className="bg-gray-800 px-4 py-2 text-xs text-gray-300 font-mono border-b border-gray-600 flex justify-between items-center">
-              <span className="uppercase tracking-wide">{language}</span>
-              <span className="text-gray-500">
-                {codeString.split("\n").length} lines
-              </span>
+          <div className="my-6 rounded-lg overflow-hidden border border-gray-700 shadow-xl">
+            <div className="bg-gray-800 px-4 py-2 text-xs text-gray-400 font-mono border-b border-gray-700 flex justify-between items-center">
+              <span className="font-semibold">{language}</span>
+              <button
+                onClick={() => navigator.clipboard.writeText(codeString)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                Copy
+              </button>
             </div>
             <SyntaxHighlighter
               style={vscDarkPlus}
@@ -81,13 +92,8 @@ function DocumentationViewer() {
                 padding: "1.5rem",
                 lineHeight: "1.6",
               }}
-              showLineNumbers={codeString.split("\n").length > 5}
-              lineNumberStyle={{
-                color: "#64748b",
-                fontSize: "12px",
-                marginRight: "1rem",
-                userSelect: "none",
-              }}
+              showLineNumbers={false}
+              wrapLines={true}
               {...props}
             >
               {codeString}
@@ -104,7 +110,7 @@ function DocumentationViewer() {
       ),
 
       h2: ({ children }) => (
-        <h2 className="text-3xl font-semibold text-gray-100 mt-12 mb-6 pb-3 border-b border-gray-600">
+        <h2 className="text-3xl font-semibold text-gray-100 mt-12 mb-6 pb-3 border-b border-gray-700">
           {children}
         </h2>
       ),
@@ -135,34 +141,36 @@ function DocumentationViewer() {
 
       // Paragraph
       p: ({ children }) => (
-        <p className="text-gray-300 mb-6 leading-7 text-base">{children}</p>
+        <p className="text-gray-300 mb-6 leading-relaxed text-base">
+          {children}
+        </p>
       ),
 
       // Lists
       ul: ({ children }) => (
-        <ul className="list-disc pl-8 mb-6 space-y-3 text-gray-300">
+        <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-300">
           {children}
         </ul>
       ),
 
       ol: ({ children }) => (
-        <ol className="list-decimal pl-8 mb-6 space-y-3 text-gray-300">
+        <ol className="list-decimal pl-6 mb-6 space-y-2 text-gray-300">
           {children}
         </ol>
       ),
 
-      li: ({ children }) => <li className="leading-7">{children}</li>,
+      li: ({ children }) => <li className="leading-relaxed">{children}</li>,
 
       // Blockquote
       blockquote: ({ children }) => (
-        <blockquote className="border-l-4 border-blue-500 bg-slate-800/60 pl-8 py-6 my-8 italic text-gray-300 rounded-r-lg">
+        <blockquote className="border-l-4 border-blue-500 bg-blue-500/10 pl-6 py-4 my-6 italic text-gray-300 rounded-r">
           {children}
         </blockquote>
       ),
 
       // Tables
       table: ({ children }) => (
-        <div className="overflow-x-auto my-8 rounded-lg border border-gray-600 shadow-lg">
+        <div className="overflow-x-auto my-8 rounded-lg border border-gray-700 shadow-xl">
           <table className="min-w-full border-collapse bg-slate-900">
             {children}
           </table>
@@ -174,7 +182,7 @@ function DocumentationViewer() {
       ),
 
       tbody: ({ children }) => (
-        <tbody className="divide-y divide-gray-600">{children}</tbody>
+        <tbody className="divide-y divide-gray-700">{children}</tbody>
       ),
 
       tr: ({ children }) => (
@@ -182,13 +190,13 @@ function DocumentationViewer() {
       ),
 
       th: ({ children }) => (
-        <th className="border border-gray-600 px-6 py-4 text-left font-semibold text-white text-sm uppercase tracking-wide">
+        <th className="border border-gray-700 px-6 py-4 text-left font-semibold text-white text-sm uppercase tracking-wider">
           {children}
         </th>
       ),
 
       td: ({ children }) => (
-        <td className="border border-gray-600 px-6 py-4 text-gray-300">
+        <td className="border border-gray-700 px-6 py-4 text-gray-300">
           {children}
         </td>
       ),
@@ -199,14 +207,14 @@ function DocumentationViewer() {
       ),
 
       em: ({ children }) => (
-        <em className="text-cyan-400 italic">{children}</em>
+        <em className="text-cyan-400 font-medium not-italic">{children}</em>
       ),
 
       // Links
       a: ({ children, href }) => (
         <a
           href={href}
-          className="text-blue-400 hover:text-blue-300 underline decoration-blue-500/50 hover:decoration-blue-300/80 transition-all duration-200 font-medium"
+          className="text-blue-400 hover:text-blue-300 underline decoration-blue-500/50 hover:decoration-blue-300 transition-all duration-200 font-medium"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -216,7 +224,7 @@ function DocumentationViewer() {
 
       // Horizontal rule
       hr: () => (
-        <hr className="border-none h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent my-12" />
+        <hr className="border-none h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent my-10" />
       ),
 
       // Images
@@ -224,11 +232,11 @@ function DocumentationViewer() {
         <img
           src={src}
           alt={alt}
-          className="max-w-full h-auto rounded-lg my-8 shadow-lg border border-gray-600"
+          className="max-w-full h-auto rounded-lg my-6 shadow-xl border border-gray-700"
         />
       ),
 
-      // Pre tag (for code blocks)
+      // Pre tag (for code blocks) - don't wrap in additional pre
       pre: ({ children }) => <>{children}</>,
     }),
     []
@@ -247,10 +255,10 @@ function DocumentationViewer() {
 
     // Remove common prefixes
     let cleaned = title
-      .replace(/^Chapter\s*\d+\s*:\s*/gi, "")
+      .replace(/^Chapter\s*\d+\s*[:.-]\s*/gi, "")
       .replace(/^Chapter\s*\d+\s*/gi, "")
+      .replace(/^\d+\s*[:.-]\s*/, "")
       .replace(/^\d+\.\s*/, "")
-      .replace(/^\d+\s*-\s*/, "")
       .trim();
 
     // Capitalize first letter if needed
@@ -291,11 +299,37 @@ function DocumentationViewer() {
     return "Untitled Chapter";
   };
 
+  // Pre-process content to fix common issues
+  const preprocessContent = (content) => {
+    if (!content) return "";
+
+    let processed = content;
+
+    // Fix malformed code blocks
+    processed = processed.replace(/```(\w*)\s*\n\s*(\w+)\s*\n/g, "```$1\n");
+
+    // Remove standalone "TEXT" or "1 lines" patterns that might be artifacts
+    processed = processed.replace(/^TEXT\s*$/gm, "");
+    processed = processed.replace(/^\d+\s+lines?\s*$/gm, "");
+
+    // Fix code blocks that have "TEXT" as language
+    processed = processed.replace(/```TEXT/g, "```text");
+
+    // Ensure proper spacing around code blocks
+    processed = processed.replace(/([^\n])\n```/g, "$1\n\n```");
+    processed = processed.replace(/```\n([^\n])/g, "```\n\n$1");
+
+    return processed;
+  };
+
   // Sanitize content to prevent rendering issues
   const sanitizeContent = (content) => {
     if (!content) return "";
 
     let sanitized = content;
+
+    // Pre-process to fix common issues
+    sanitized = preprocessContent(sanitized);
 
     // Fix common markdown issues
     // Remove excessive newlines
@@ -311,7 +345,10 @@ function DocumentationViewer() {
     sanitized = sanitized.replace(/^(#{1,6})([^#\s])/gm, "$1 $2");
 
     // Remove any stray HTML tags
-    sanitized = sanitized.replace(/<[^>]*>/g, "");
+    sanitized = sanitized.replace(
+      /<(?!\/?(code|pre|em|strong|a|img|br|hr|ul|ol|li|p|h[1-6]|blockquote|table|thead|tbody|tr|th|td)\b)[^>]*>/gi,
+      ""
+    );
 
     return sanitized;
   };
@@ -385,11 +422,10 @@ function DocumentationViewer() {
         {/* Enhanced Sidebar */}
         <div className="w-80 bg-slate-950 border-r border-slate-800 min-h-screen fixed left-0 top-0">
           <div className="p-6 border-b border-slate-800">
-            <h2 className="font-bold text-xl text-white mb-2">
-              Repository Guide
-            </h2>
+            <h2 className="font-bold text-xl text-white mb-2">Documentation</h2>
             <p className="text-sm text-gray-400 truncate">
-              {documentationData.repo_url?.split("/").pop() || "Documentation"}
+              {documentationData.repo_url?.split("/").pop() ||
+                "Repository Guide"}
             </p>
             <div className="mt-3 inline-flex items-center bg-slate-800 text-gray-300 px-3 py-1.5 rounded-full text-xs font-medium">
               <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
@@ -405,9 +441,9 @@ function DocumentationViewer() {
               {/* Introduction */}
               <button
                 onClick={() => setCurrentPage("introduction")}
-                className={`w-full text-left p-4 rounded-lg transition-all duration-200 font-medium ${
+                className={`w-full text-left p-4 rounded-lg transition-all duration-200 ${
                   currentPage === "introduction"
-                    ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                    ? "bg-blue-600 text-white shadow-lg"
                     : "text-gray-300 hover:bg-slate-900 hover:text-white"
                 }`}
               >
@@ -416,7 +452,7 @@ function DocumentationViewer() {
                   <div>
                     <div className="font-medium">Introduction</div>
                     <div className="text-xs text-gray-400 mt-1">
-                      Getting started guide
+                      Overview and getting started
                     </div>
                   </div>
                 </div>
@@ -434,22 +470,20 @@ function DocumentationViewer() {
                   <button
                     key={chapterKey}
                     onClick={() => setCurrentPage(chapterKey)}
-                    className={`w-full text-left p-4 rounded-lg transition-all duration-200 font-medium ${
+                    className={`w-full text-left p-4 rounded-lg transition-all duration-200 ${
                       currentPage === chapterKey
-                        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                        ? "bg-blue-600 text-white shadow-lg"
                         : "text-gray-300 hover:bg-slate-900 hover:text-white"
                     }`}
                   >
                     <div className="flex items-start space-x-3">
-                      <span className="text-gray-400 text-sm font-mono mt-0.5 bg-slate-800 px-2 py-1 rounded">
+                      <span className="text-gray-400 text-sm font-mono mt-0.5 bg-slate-800 px-2 py-1 rounded min-w-[2rem] text-center">
                         {chapterNumber}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">
-                          {displayName}
-                        </div>
+                        <div className="font-medium">{displayName}</div>
                         {chapter.description && (
-                          <div className="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                          <div className="text-xs text-gray-400 mt-1 line-clamp-2">
                             {chapter.description}
                           </div>
                         )}
@@ -464,7 +498,7 @@ function DocumentationViewer() {
           <div className="absolute bottom-6 left-4 right-4">
             <button
               onClick={handleNewRepository}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 border border-slate-600 hover:border-slate-500"
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 border border-slate-700"
             >
               🔄 New Repository
             </button>
@@ -473,14 +507,13 @@ function DocumentationViewer() {
 
         {/* Main Content Area */}
         <div className="flex-1 ml-80">
-          <div className="max-w-5xl mx-auto px-8 py-8">
-            <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-12 shadow-2xl">
-              <article className="documentation-content prose prose-invert max-w-none">
+          <div className="max-w-5xl mx-auto px-8 py-12">
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 md:p-12 shadow-2xl">
+              <article className="prose prose-invert prose-lg max-w-none">
                 <ReactMarkdown
                   components={markdownComponents}
                   remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
-                  skipHtml={false}
+                  skipHtml={true}
                 >
                   {getCurrentContent()}
                 </ReactMarkdown>
