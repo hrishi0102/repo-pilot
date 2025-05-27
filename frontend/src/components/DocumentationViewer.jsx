@@ -44,9 +44,9 @@ function DocumentationViewer() {
           language={match[1]}
           PreTag="div"
           customStyle={{
-            margin: "1.5rem 0",
-            borderRadius: "0.75rem",
-            fontSize: "0.9rem",
+            margin: "1rem 0",
+            borderRadius: "0.5rem",
+            fontSize: "0.875rem",
             background: "#1a1a1a",
             border: "1px solid #333",
           }}
@@ -56,7 +56,7 @@ function DocumentationViewer() {
         </SyntaxHighlighter>
       ) : (
         <code
-          className="bg-gray-800 text-yellow-300 px-2 py-1 rounded-md text-sm font-mono border border-gray-700"
+          className="bg-gray-800 text-amber-200 px-1.5 py-0.5 rounded text-sm font-mono border border-gray-700"
           {...props}
         >
           {children}
@@ -65,47 +65,47 @@ function DocumentationViewer() {
     },
     h1({ children }) {
       return (
-        <h1 className="text-4xl font-bold text-white mb-8 pb-4 border-b-2 border-gray-600">
+        <h1 className="text-2xl font-bold text-white mb-4 pb-2 border-b border-gray-700">
           {children}
         </h1>
       );
     },
     h2({ children }) {
       return (
-        <h2 className="text-3xl font-semibold text-gray-100 mt-10 mb-6 pb-3 border-b border-gray-700">
+        <h2 className="text-xl font-semibold text-gray-100 mt-6 mb-3 pb-1 border-b border-gray-800">
           {children}
         </h2>
       );
     },
     h3({ children }) {
       return (
-        <h3 className="text-2xl font-medium text-gray-200 mt-8 mb-4">
+        <h3 className="text-lg font-medium text-gray-200 mt-4 mb-2">
           {children}
         </h3>
       );
     },
     h4({ children }) {
       return (
-        <h4 className="text-xl font-medium text-gray-300 mt-6 mb-3">
+        <h4 className="text-base font-medium text-gray-300 mt-3 mb-2">
           {children}
         </h4>
       );
     },
     p({ children }) {
       return (
-        <p className="text-gray-300 mb-6 leading-relaxed text-lg">{children}</p>
+        <p className="text-gray-300 mb-3 leading-relaxed text-sm">{children}</p>
       );
     },
     ul({ children }) {
       return (
-        <ul className="list-disc pl-8 mb-6 space-y-3 text-gray-300 text-lg">
+        <ul className="list-disc pl-6 mb-3 space-y-1 text-gray-300 text-sm">
           {children}
         </ul>
       );
     },
     ol({ children }) {
       return (
-        <ol className="list-decimal pl-8 mb-6 space-y-3 text-gray-300 text-lg">
+        <ol className="list-decimal pl-6 mb-3 space-y-1 text-gray-300 text-sm">
           {children}
         </ol>
       );
@@ -115,28 +115,30 @@ function DocumentationViewer() {
     },
     blockquote({ children }) {
       return (
-        <blockquote className="border-l-4 border-blue-400 bg-blue-900/10 pl-6 py-4 my-6 italic text-gray-300 rounded-r-lg">
+        <blockquote className="border-l-4 border-gray-600 bg-gray-800/30 pl-4 py-2 my-3 italic text-gray-300 rounded-r text-sm">
           {children}
         </blockquote>
       );
     },
     table({ children }) {
       return (
-        <div className="overflow-x-auto my-6 rounded-lg border border-gray-700">
-          <table className="min-w-full border-collapse">{children}</table>
+        <div className="overflow-x-auto my-3 rounded border border-gray-700">
+          <table className="min-w-full border-collapse text-sm">
+            {children}
+          </table>
         </div>
       );
     },
     th({ children }) {
       return (
-        <th className="border border-gray-700 bg-gray-800 px-6 py-3 text-left font-semibold text-white">
+        <th className="border border-gray-700 bg-gray-800 px-3 py-2 text-left font-semibold text-white text-sm">
           {children}
         </th>
       );
     },
     td({ children }) {
       return (
-        <td className="border border-gray-700 px-6 py-3 text-gray-300 bg-gray-900/50">
+        <td className="border border-gray-700 px-3 py-2 text-gray-300 bg-gray-900/50 text-sm">
           {children}
         </td>
       );
@@ -148,7 +150,7 @@ function DocumentationViewer() {
       return (
         <a
           href={href}
-          className="text-blue-400 hover:text-blue-300 underline decoration-blue-500/50 hover:decoration-blue-400"
+          className="text-gray-300 hover:text-white underline decoration-gray-500 hover:decoration-gray-300"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -171,6 +173,7 @@ function DocumentationViewer() {
     return title
       .replace(/^Chapter\s*\d+:\s*/i, "")
       .replace(/^\d+\.\s*/, "")
+      .replace(/\*\*/g, "") // Remove markdown bold formatting
       .trim();
   };
 
@@ -189,7 +192,7 @@ function DocumentationViewer() {
           <p className="text-lg mb-4">No documentation data found.</p>
           <button
             onClick={() => navigate("/")}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition"
+            className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition"
           >
             Go Home
           </button>
@@ -205,9 +208,9 @@ function DocumentationViewer() {
     <div className="min-h-screen bg-black text-white">
       <div className="flex">
         {/* Sidebar */}
-        <div className="w-80 bg-gray-900 border-r border-gray-700 min-h-screen fixed left-0 top-0 shadow-xl">
-          <div className="p-6 border-b border-gray-700">
-            <h2 className="font-bold text-xl text-white mb-2">
+        <div className="w-80 bg-gray-950 border-r border-gray-800 min-h-screen fixed left-0 top-0">
+          <div className="p-6 border-b border-gray-800">
+            <h2 className="font-semibold text-xl text-white mb-2">
               Repository Guide
             </h2>
             <p className="text-sm text-gray-400 truncate">
@@ -220,10 +223,10 @@ function DocumentationViewer() {
             <div className="space-y-2">
               <button
                 onClick={() => setCurrentPage("introduction")}
-                className={`w-full text-left px-4 py-3 rounded-lg transition font-medium ${
+                className={`w-full text-left px-4 py-3 rounded-lg transition font-medium text-sm ${
                   currentPage === "introduction"
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-300 hover:bg-gray-900 hover:text-white"
                 }`}
               >
                 📖 Introduction
@@ -239,17 +242,17 @@ function DocumentationViewer() {
                   <button
                     key={chapterKey}
                     onClick={() => setCurrentPage(chapterKey)}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition font-medium ${
+                    className={`w-full text-left px-4 py-3 rounded-lg transition font-medium text-sm ${
                       currentPage === chapterKey
-                        ? "bg-blue-600 text-white shadow-lg"
-                        : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        ? "bg-gray-800 text-white"
+                        : "text-gray-300 hover:bg-gray-900 hover:text-white"
                     }`}
                   >
                     <div className="flex items-start">
-                      <span className="text-blue-400 mr-2 mt-0.5">
+                      <span className="text-gray-400 mr-3 mt-0.5 text-sm">
                         {index + 1}.
                       </span>
-                      <span className="leading-tight line-clamp-2">
+                      <span className="leading-tight line-clamp-3">
                         {displayName}
                       </span>
                     </div>
@@ -262,7 +265,7 @@ function DocumentationViewer() {
           <div className="absolute bottom-6 left-4 right-4">
             <button
               onClick={handleNewRepository}
-              className="w-full bg-gray-800 hover:bg-gray-700 text-white px-4 py-3 rounded-lg font-medium transition border border-gray-600"
+              className="w-full bg-gray-800 hover:bg-gray-700 text-white px-4 py-3 rounded-lg font-medium transition border border-gray-700"
             >
               🔄 New Repository
             </button>
@@ -271,8 +274,8 @@ function DocumentationViewer() {
 
         {/* Main Content */}
         <div className="flex-1 ml-80">
-          <div className="max-w-5xl mx-auto px-8 py-10">
-            <article className="prose prose-invert prose-xl max-w-none">
+          <div className="max-w-4xl mx-auto px-8 py-8">
+            <article className="prose prose-invert max-w-none">
               {currentPage === "introduction" ? (
                 <ReactMarkdown
                   components={markdownComponents}

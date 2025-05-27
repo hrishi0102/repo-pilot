@@ -69,64 +69,66 @@ function DocumentationHome() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4 text-blue-400">
+    <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="text-center mb-16">
+        <h1 className="text-4xl font-bold mb-6 text-white">
           Repository Documentation Generator
         </h1>
-        <p className="text-gray-400 text-lg">
-          Generate comprehensive documentation for any GitHub repository
+        <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          Generate comprehensive documentation for any GitHub repository using
+          AI
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Step 1: Repository Input */}
-        <div className="bg-[#1a202c] border border-[#2d3748] rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-blue-300">
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
+          <h2 className="text-xl font-semibold mb-6 text-white">
             Step 1: Enter Repository URL
           </h2>
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             <input
               type="text"
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
               placeholder="https://github.com/username/repository"
               disabled={loading}
-              className="flex-1 bg-[#2d3748] border border-[#4a5568] rounded-md px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-700"
+              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-transparent disabled:bg-gray-700 disabled:text-gray-500"
             />
             <button
               onClick={handleIngestRepository}
               disabled={!repoUrl || loading || sessionId}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md px-6 py-3 transition disabled:bg-gray-600 disabled:cursor-not-allowed"
+              className="bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg px-6 py-3 transition disabled:bg-gray-800 disabled:cursor-not-allowed disabled:text-gray-500"
             >
               {loading && !sessionId ? "Ingesting..." : "Ingest Repository"}
             </button>
           </div>
           {sessionId && (
-            <div className="mt-3 text-green-400 text-sm">
-              ✓ Repository ingested successfully
+            <div className="mt-4 text-green-400 text-sm flex items-center">
+              <span className="mr-2">✓</span>
+              Repository ingested successfully
             </div>
           )}
         </div>
 
         {/* Step 2: Generate Documentation */}
         {sessionId && (
-          <div className="bg-[#1a202c] border border-[#2d3748] rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-blue-300">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
+            <h2 className="text-xl font-semibold mb-4 text-white">
               Step 2: Generate Documentation
             </h2>
-            <p className="text-gray-400 mb-4">
+            <p className="text-gray-400 mb-6">
               This will take approximately 5-6 minutes to generate comprehensive
-              documentation.
+              documentation with AI analysis.
             </p>
             <button
               onClick={handleGenerateDocumentation}
               disabled={loading}
-              className="bg-green-600 hover:bg-green-700 text-white font-medium rounded-md px-6 py-3 transition disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center gap-2"
+              className="bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg px-6 py-3 transition disabled:bg-gray-800 disabled:cursor-not-allowed flex items-center gap-3"
             >
               {loading ? (
                 <>
-                  <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+                  <span className="h-4 w-4 rounded-full border-2 border-gray-400 border-t-white animate-spin"></span>
                   Generating Documentation...
                 </>
               ) : (
@@ -138,27 +140,42 @@ function DocumentationHome() {
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-900/50 border border-red-500 rounded-lg p-4">
+          <div className="bg-red-900/20 border border-red-800 rounded-xl p-6">
             <p className="text-red-300">{error}</p>
           </div>
         )}
 
         {/* Progress Info */}
         {loading && sessionId && (
-          <div className="bg-[#1a202c] border border-[#2d3748] rounded-lg p-6">
-            <h3 className="font-semibold mb-3 text-blue-300">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
+            <h3 className="font-semibold mb-4 text-white">
               Generation Progress
             </h3>
-            <div className="space-y-2 text-sm text-gray-400">
-              <p>
-                • Analyzing repository content and identifying key abstractions
-              </p>
-              <p>• Mapping component relationships and dependencies</p>
-              <p>• Creating optimal chapter structure</p>
-              <p>• Writing detailed documentation for each chapter</p>
-              <p>• Formatting final documentation</p>
+            <div className="space-y-3 text-gray-400">
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                <span>
+                  Analyzing repository content and identifying key abstractions
+                </span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                <span>Mapping component relationships and dependencies</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                <span>Creating optimal chapter structure</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                <span>Writing detailed documentation for each chapter</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
+                <span>Formatting final documentation</span>
+              </div>
             </div>
-            <p className="mt-4 text-yellow-400 text-sm">
+            <p className="mt-6 text-gray-300 text-sm font-medium">
               Please wait while we generate your documentation...
             </p>
           </div>

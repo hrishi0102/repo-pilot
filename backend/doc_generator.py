@@ -149,29 +149,22 @@ Key Abstractions: {abstractions}
 Component Relationships: {relationships}
 Repository Summary: {comprehensive_summary}
 
-IMPORTANT: Format your response as clean, well-structured markdown with:
+Write detailed documentation for this chapter that includes:
+- **Clear explanations** of concepts covered in this chapter
+- **Code examples** with explanations where relevant
+- **Visual representations** in text/ASCII format for complex concepts
+- **Practical guidance** for new contributors
+- **Links between concepts** and how they fit in the bigger picture
+- **Common patterns** and best practices shown in the code
+- **Troubleshooting tips** for common issues in this area
 
-1. Start with a main chapter header using # (H1)
-2. Use ## for major sections (H2)  
-3. Use ### for subsections (H3)
-4. Use proper code blocks with language specification:
-   ```javascript
-   // code here
-   ```
-5. Use bullet points with - or *
-6. Use numbered lists with 1. 2. 3.
-7. Use **bold** for emphasis
-8. Use `inline code` for variables/functions
-9. Leave blank lines between sections for proper spacing
+Format in clean markdown with:
+- Proper headers (##, ###)
+- Code blocks with language specification
+- Lists and tables where helpful
+- Clear section divisions
 
-Write detailed documentation that includes:
-- Clear explanations of concepts
-- Code examples with proper formatting
-- Practical guidance for new contributors
-- Step-by-step processes where applicable
-- Troubleshooting tips
-
-Make sure the markdown renders properly with good visual hierarchy and spacing.
+Make this chapter comprehensive enough that someone reading it can understand this aspect of the repository thoroughly.
 """
         
         result = await llm_client.generate_content(prompt)
@@ -187,9 +180,7 @@ Repository: {repo_url}
 Repository Summary: {comprehensive_summary}
 Key Abstractions: {abstractions}
 
-IMPORTANT: Format as clean, well-structured markdown:
-
-Create an introduction following this exact structure:
+Create an introduction that includes:
 
 # Repository Guide for New Contributors
 
@@ -204,38 +195,22 @@ Create an introduction following this exact structure:
 - Prerequisites for contributing
 
 ## Repository Structure
-```
-repo-name/
-├── folder1/
-│   ├── subfolder/
-│   └── files...
-├── folder2/
-└── README.md
-```
-
-## Key Technologies
-- **Technology 1**: Description and purpose
-- **Technology 2**: Description and purpose
+- Main directories and their purposes
+- Important files new contributors should know about
+- How the codebase is organized
 
 ## How to Use This Guide
-1. Start with this introduction
-2. Read Chapter 1 for architecture overview
-3. Follow subsequent chapters in order
-4. Use the navigation to jump between sections
+- What each chapter covers
+- Recommended reading order
+- How to get help
 
 ## Getting Started Checklist
-- [ ] Clone the repository
-- [ ] Install dependencies
-- [ ] Set up development environment
-- [ ] Run the application locally
-- [ ] Verify setup works
+- Setup requirements
+- Installation steps
+- How to run the project locally
+- How to verify your setup works
 
-## Need Help?
-- Check the troubleshooting section
-- Review common issues
-- Contact maintainers
-
-Make sure to use proper markdown formatting with clear headers, code blocks, and lists.
+Format in clean markdown that serves as a welcoming entry point for new contributors.
 """
         
         result = await llm_client.generate_content(prompt)
@@ -281,29 +256,13 @@ Make sure to use proper markdown formatting with clear headers, code blocks, and
             logger.info("Step 6: Writing individual chapters...")
             chapters = {}
             
-            # Better parsing of chapters to extract clean titles
-            chapter_lines = []
-            for line in chapter_structure.split('\n'):
-                line = line.strip()
-                if line and any(keyword in line.lower() for keyword in ['chapter', '1.', '2.', '3.', '4.', '5.']):
-                    # Clean the line to get a better title
-                    clean_line = line.replace('**', '').replace('*', '').strip()
-                    if clean_line and len(clean_line) > 5:  # Avoid very short lines
-                        chapter_lines.append(clean_line)
+            # Simple parsing of chapters (assuming numbered format)
+            chapter_lines = [line.strip() for line in chapter_structure.split('\n') if line.strip() and ('Chapter' in line or any(char.isdigit() for char in line[:3]))]
             
-            # Remove duplicates while preserving order
-            seen = set()
-            unique_chapters = []
-            for chapter in chapter_lines[:5]:  # Limit to 5 chapters
-                chapter_key = chapter.lower().replace(' ', '')
-                if chapter_key not in seen:
-                    seen.add(chapter_key)
-                    unique_chapters.append(chapter)
-            
-            for i, chapter_line in enumerate(unique_chapters, 1):
-                logger.info(f"Writing Chapter {i}: {chapter_line[:60]}...")
+            for i, chapter_line in enumerate(chapter_lines[:5], 1):  # Limit to 5 chapters
+                logger.info(f"Writing Chapter {i}: {chapter_line[:50]}...")
                 chapter_content = await self.write_chapter(
-                    chapter_info=f"Chapter {i}: {chapter_line}",
+                    chapter_info=chapter_line,
                     abstractions=abstractions,
                     relationships=relationships,
                     comprehensive_summary=comprehensive_summary,
