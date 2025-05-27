@@ -196,7 +196,7 @@ FORMATTING RULES:
 4. Keep code examples under 10 lines each
 5. Use - for bullet lists, 1. for numbered lists
 6. Bold important terms with **text**
-7. NO HTML, NO raw formatting
+7. NO HTML, NO raw formatting STRICTLY.
 
 Chapter: {chapter_info['title']}
 Description: {chapter_info['description']}
@@ -228,7 +228,7 @@ Write comprehensive documentation including:
 - Best practices
 - Common patterns
 
-Output clean markdown only. Start with the chapter title as # heading.
+NOTE: Output clean markdown only. Start with the chapter title as # heading.
 """
         
         result = await llm_client.generate_content(prompt)
