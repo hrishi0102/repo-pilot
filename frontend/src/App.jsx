@@ -4,8 +4,10 @@ import HomePage from "./components/HomePage";
 import GenerationPage from "./components/GenerationPage";
 import DocumentationViewer from "./components/DocumentationViewer";
 import Chat from "./components/Chat";
+import { inject } from "@vercel/analytics";
 
 function App() {
+  inject();
   return (
     <div className="bg-black text-gray-100 min-h-screen">
       <Navigation />
