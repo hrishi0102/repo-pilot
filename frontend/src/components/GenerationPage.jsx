@@ -94,6 +94,25 @@ function GenerationPage() {
         {/* Step 1: Ready to Generate */}
         {step === 1 && (
           <div className="text-center space-y-8">
+            {/* Warning Notice */}
+            <div className="bg-amber-900/20 border border-amber-700/50 rounded-xl p-6 mb-8">
+              <div className="flex items-start space-x-3">
+                <span className="text-amber-400 text-xl">⚠️</span>
+                <div className="text-left">
+                  <h3 className="text-amber-300 font-semibold mb-2">
+                    Resource-Intensive Operation
+                  </h3>
+                  <p className="text-amber-200/80 text-sm leading-relaxed">
+                    Documentation generation is a computationally expensive
+                    process that takes 6-8 minutes to complete. It uses advanced
+                    AI analysis to thoroughly examine your repository. Please
+                    ensure you want to proceed before starting, as this
+                    operation consumes significant resources.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
               <h2 className="text-xl font-semibold text-white mb-4">
                 Ready to Generate Documentation
@@ -131,7 +150,7 @@ function GenerationPage() {
               </button>
 
               <p className="text-gray-500 text-sm mt-4">
-                This process takes approximately 5-6 minutes
+                This process takes approximately 6-8 minutes
               </p>
             </div>
 

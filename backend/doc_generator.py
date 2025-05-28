@@ -161,9 +161,9 @@ Use proper markdown formatting. Code examples use ```language blocks.
         prompt = f"""
         This is used to figure out the most logical  order to teach the abstractions and relationships.Analyzes dependencies to determine what needs to be learned first.
         Create a A sensible learning sequence that builds knowledge step by step. Start from foundational concepts, data flow, core abstractions, relatoinships, and finally the full system.
-        You are creating documentation for developers. Output ONLY clean, properly formatted markdown. Make a proper learning plan such that the developer understands the repository as a whole in a step by step fashion.
-
-Create 4-5 chapters based on:
+        You are creating documentation for developers. Make a proper learning plan such that the developer understands the repository as a whole in a step by step fashion.
+        Output ONLY clean, properly formatted markdown.
+Create EXACTLY 4 chapters based on:
 
 Abstractions:
 {abstractions}
@@ -183,7 +183,7 @@ Description of what this chapter covers...
 ## Chapter 3: [Title]
 Description of what this chapter covers...
 
-## Chapter n ...
+## Chapter 4: [Title]
 Description of what this chapter covers...
 
 Use clear, descriptive titles. No "Chapter X:" prefix needed.

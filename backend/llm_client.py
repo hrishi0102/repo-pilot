@@ -23,7 +23,7 @@ class LLMClient:
             
             # Add 15 second delay before API call to prevent overloading
             logger.info("Waiting 15 seconds before API call...")
-            await asyncio.sleep(10)
+            await asyncio.sleep(15)
             
             response = self.client.models.generate_content(
                 model="gemini-2.0-flash-lite",
