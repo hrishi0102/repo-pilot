@@ -4,3 +4,4 @@ python-dotenv
 httpx
 gitingest
 pydantic
+asyncio-throttle==1.0.2
