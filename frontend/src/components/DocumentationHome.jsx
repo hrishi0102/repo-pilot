@@ -13,7 +13,7 @@ function DocumentationHome() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/ingest", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ingest`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ repo_url: repoUrl }),
@@ -43,11 +43,14 @@ function DocumentationHome() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/generate-docs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/generate-docs`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId }),
+        }
+      );
 
       const data = await response.json();
 
