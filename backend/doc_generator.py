@@ -375,16 +375,20 @@ Output clean markdown only. Use proper headings, code blocks, and lists.
             # Step 5: Parse chapter structure
             logger.info("Step 5: Parsing chapter structure...")
             parsed_chapters = self._parse_chapter_structure(raw_chapter_structure)
-              # Step 6: Generate diagrams
+            # Step 6: Generate diagrams
             logger.info("Step 6: Generating Mermaid diagrams...")
-            diagrams = await diagram_generator.generate_all_diagrams(
-                repo_url=repo_url,
-                abstractions=abstractions,
-                relationships=relationships,
-                tree=tree,
-                content=content
-            )
-            
+            try:
+                diagrams = await diagram_generator.generate_all_diagrams(
+                    repo_url=repo_url,
+                    abstractions=abstractions,
+                    relationships=relationships,
+                    tree=tree,
+                    content=content
+                )
+            except Exception as e:
+                logger.error(f"Error generating diagrams: {str(e)}")
+                diagrams = {}
+
             # Step 7: Create introduction
             logger.info("Step 7: Creating introduction...")
             introduction = await self.create_introduction(comprehensive_summary, abstractions, repo_url)

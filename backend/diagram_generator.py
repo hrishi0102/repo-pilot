@@ -252,7 +252,8 @@ Generate the repository structure mindmap now:
         
         # Otherwise, try to find mermaid keywords and extract relevant content
         content_lower = content.lower()
-        if any(keyword in content_lower for keyword in ['flowchart', 'classDiagram', 'sequenceDiagram', 'mindmap']):
+
+        if any(keyword in content_lower for keyword in ['flowchart', 'classdiagram', 'sequencediagram', 'mindmap']):
             # Return the content as-is, it might be just the mermaid code
             return content.strip()
         
