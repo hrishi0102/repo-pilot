@@ -34,7 +34,7 @@ class DocumentationGenerator:
         cleaned = re.sub(r'\*\*([^*]+)\*\*', r'\1', cleaned)  # Remove bold
         return cleaned.strip()
     
-    async def generate_comprehensive_summary(self, content: str) -> Optional[str]:
+    async def generate_comprehensive_summary(self, content: str, user_api_key: str = None) -> Optional[str]:
         """Generate comprehensive summary of repository content"""
         truncated_content = self._truncate_content_if_needed(content)
         
@@ -66,13 +66,13 @@ Create a well-structured summary covering:
 Output clean markdown only. Start with # Repository Overview
 """
         
-        result = await llm_client.generate_content(prompt)
+        result = await llm_client.generate_content(prompt, user_api_key)
         if result:
             result = markdown_cleaner.clean_markdown(result)
             logger.info("Generated and cleaned comprehensive repository summary")
         return result
     
-    async def identify_abstractions(self, content: str) -> Optional[str]:
+    async def identify_abstractions(self, content: str, user_api_key: str = None) -> Optional[str]:
         """Step 1: Identify key abstractions using FULL repo content"""
         truncated_content = self._truncate_content_if_needed(content)
         
@@ -102,13 +102,13 @@ Output format:
 Use proper markdown formatting. No HTML, no mixed formatting.
 """
                 
-        result = await llm_client.generate_content(prompt)
+        result = await llm_client.generate_content(prompt, user_api_key)
         if result:
             result = markdown_cleaner.clean_markdown(result)
             logger.info("Identified and cleaned key abstractions")
         return result
             
-    async def analyze_relationships(self, abstractions: str, comprehensive_summary: str) -> Optional[str]:
+    async def analyze_relationships(self, abstractions: str, comprehensive_summary: str, user_api_key: str = None) -> Optional[str]:
         """Step 2: Analyze relationships using comprehensive summary"""
         prompt = f"""
 You are creating documentation for developers. Output ONLY clean, properly formatted markdown.
@@ -150,13 +150,13 @@ Create a relationship analysis with:
 Use proper markdown formatting. Code examples use ```language blocks.
 """
         
-        result = await llm_client.generate_content(prompt)
+        result = await llm_client.generate_content(prompt, user_api_key)
         if result:
             result = markdown_cleaner.clean_markdown(result)
             logger.info("Analyzed and cleaned component relationships")
         return result
     
-    async def create_chapter_structure(self, abstractions: str, relationships: str) -> Optional[str]:
+    async def create_chapter_structure(self, abstractions: str, relationships: str, user_api_key: str = None) -> Optional[str]:
         """Step 3: Create structured chapter plan"""
         prompt = f"""
         This is used to figure out the most logical  order to teach the abstractions and relationships.Analyzes dependencies to determine what needs to be learned first.
@@ -189,13 +189,13 @@ Description of what this chapter covers...
 Use clear, descriptive titles. No "Chapter X:" prefix needed.
 """
         
-        result = await llm_client.generate_content(prompt)
+        result = await llm_client.generate_content(prompt, user_api_key)
         if result:
             result = markdown_cleaner.clean_markdown(result)
             logger.info("Created and cleaned chapter structure")
         return result
     
-    async def write_chapter(self, chapter_info: Dict, abstractions: str, relationships: str, comprehensive_summary: str, repo_url: str) -> Optional[str]:
+    async def write_chapter(self, chapter_info: Dict, abstractions: str, relationships: str, comprehensive_summary: str, repo_url: str, user_api_key: str = None) -> Optional[str]:
         """Write detailed documentation for a single chapter"""
         prompt = f"""
 You are writing Chapter {chapter_info['number']} of a technical tutorial. Output ONLY clean, well-structured markdown.
@@ -233,7 +233,7 @@ TASK:
    - Why its structured this way
 7. Show **small code snippets** to illustrate key pieces. Prefer real examples from the codebase.
 8. Explain any tricky or interesting logic clearly.
-9. Finish with a brief summary and possibly a “Whats Next” section that previews the next chapter.
+9. Finish with a brief summary and possibly a "Whats Next" section that previews the next chapter.
 
 Write as if you're teaching a junior dev sitting beside you. Assume they know basic Python/JS/etc., but not the codebase.
 
@@ -247,7 +247,7 @@ Write comprehensive documentation including:
 NOTE: Output clean markdown only. Start with the chapter title as # heading.
 """
         
-        result = await llm_client.generate_content(prompt)
+        result = await llm_client.generate_content(prompt, user_api_key)
         if result:
             result = markdown_cleaner.clean_markdown(result)
             # Ensure chapter starts with proper heading
@@ -256,7 +256,7 @@ NOTE: Output clean markdown only. Start with the chapter title as # heading.
             logger.info(f"Generated and cleaned chapter {chapter_info['number']}")
         return result
     
-    async def create_introduction(self, comprehensive_summary: str, abstractions: str, repo_url: str) -> Optional[str]:
+    async def create_introduction(self, comprehensive_summary: str, abstractions: str, repo_url: str, user_api_key: str = None) -> Optional[str]:
         """Create comprehensive detailed introduction page"""
         prompt = f"""
 You are creating the introduction page for technical documentation. Output ONLY clean, properly formatted markdown.
@@ -294,7 +294,7 @@ folder/
 Output clean markdown only. Use proper headings, code blocks, and lists.
 """
         
-        result = await llm_client.generate_content(prompt)
+        result = await llm_client.generate_content(prompt, user_api_key)
         if result:
             result = markdown_cleaner.clean_markdown(result)
             logger.info("Created and cleaned introduction")
@@ -336,32 +336,32 @@ Output clean markdown only. Use proper headings, code blocks, and lists.
         
         return chapters[:3]  # Limit to 3 chapters
     
-    async def generate_full_documentation(self, repo_url: str, summary: str, tree: str, content: str) -> Dict:
+    async def generate_full_documentation(self, repo_url: str, summary: str, tree: str, content: str, user_api_key: str = None) -> Dict:
         """Main method that orchestrates the entire documentation generation process"""
         try:
-            logger.info(f"Starting documentation generation for {repo_url}")
+            logger.info(f"Starting documentation generation for {repo_url} | Using: {'User Key' if user_api_key else 'System Key'}")
             
             # Step 1: Generate comprehensive summary
             logger.info("Step 1: Generating comprehensive repository summary...")
-            comprehensive_summary = await self.generate_comprehensive_summary(content)
+            comprehensive_summary = await self.generate_comprehensive_summary(content, user_api_key)
             if not comprehensive_summary:
                 return {"error": "Failed to generate comprehensive summary"}
             
             # Step 2: Identify abstractions (using full content)
             logger.info("Step 2: Identifying abstractions from full content...")
-            abstractions = await self.identify_abstractions(content)
+            abstractions = await self.identify_abstractions(content, user_api_key)
             if not abstractions:
                 return {"error": "Failed to identify abstractions"}
             
             # Step 3: Analyze relationships (using comprehensive summary)
             logger.info("Step 3: Analyzing relationships...")
-            relationships = await self.analyze_relationships(abstractions, comprehensive_summary)
+            relationships = await self.analyze_relationships(abstractions, comprehensive_summary, user_api_key)
             if not relationships:
                 return {"error": "Failed to analyze relationships"}
             
             # Step 4: Create structured chapter plan
             logger.info("Step 4: Creating structured chapter plan...")
-            raw_chapter_structure = await self.create_chapter_structure(abstractions, relationships)
+            raw_chapter_structure = await self.create_chapter_structure(abstractions, relationships, user_api_key)
             if not raw_chapter_structure:
                 return {"error": "Failed to create chapter structure"}
             
@@ -371,7 +371,7 @@ Output clean markdown only. Use proper headings, code blocks, and lists.
             
             # Step 6: Create introduction
             logger.info("Step 6: Creating introduction...")
-            introduction = await self.create_introduction(comprehensive_summary, abstractions, repo_url)
+            introduction = await self.create_introduction(comprehensive_summary, abstractions, repo_url, user_api_key)
             if not introduction:
                 return {"error": "Failed to create introduction"}
             
@@ -388,7 +388,8 @@ Output clean markdown only. Use proper headings, code blocks, and lists.
                     abstractions=abstractions,
                     relationships=relationships,
                     comprehensive_summary=comprehensive_summary,
-                    repo_url=repo_url
+                    repo_url=repo_url,
+                    user_api_key=user_api_key
                 )
                 
                 if chapter_content:

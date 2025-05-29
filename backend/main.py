@@ -38,12 +38,6 @@ app = FastAPI(
     description="AI-powered repository documentation generator"
 )
 
-# Security: Trusted hosts (add your Render domain)
-# app.add_middleware(
-#     TrustedHostMiddleware, 
-#     allowed_hosts=["*"]  # Replace with your actual domain: ["your-app.onrender.com", "localhost"]
-# )
-
 # CORS - Restrict in production
 ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "https://your-frontend-domain.com, http://localhost:5173").split(",")
 app.add_middleware(
@@ -78,13 +72,14 @@ ingested_repos = {}
 global_request_count = []
 
 class SessionData:
-    def __init__(self, session_id: str, repo_url: str, summary: str, tree: str, content: str):
+    def __init__(self, session_id: str, repo_url: str, summary: str, tree: str, content: str, user_api_key: str = None):
         self.session_id = session_id
         self.repo_url = repo_url
         self.summary = summary
         self.tree = tree
         # Truncate content if too large
         self.content = content[:MAX_CONTENT_SIZE] if len(content) > MAX_CONTENT_SIZE else content
+        self.user_api_key = user_api_key  # New field for user's API key
         self.created_at = datetime.now()
         self.last_accessed = datetime.now()
         self.content_size = len(content)
@@ -104,6 +99,7 @@ class SessionData:
             "summary": self.summary,
             "tree": self.tree,
             "content": self.content,
+            "has_user_key": bool(self.user_api_key),
             "ingested_at": self.created_at.isoformat()
         }
 
@@ -197,7 +193,7 @@ async def rate_limit_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
-# Memory management functions
+# Memory management functions (keeping existing functions unchanged)
 def get_memory_usage():
     """Get current memory usage statistics"""
     total_sessions = len(ingested_repos)
@@ -314,6 +310,7 @@ async def startup_event():
 # Models
 class RepoRequest(BaseModel):
     repo_url: str
+    api_key: str = None  # New optional field for user's API key
     
 class ChatRequest(BaseModel):
     session_id: str
@@ -321,6 +318,9 @@ class ChatRequest(BaseModel):
 
 class DocsRequest(BaseModel):
     session_id: str
+
+class ValidateKeyRequest(BaseModel):
+    api_key: str
 
 # Routes
 @app.get("/")
@@ -373,6 +373,38 @@ async def health_check():
             "timestamp": datetime.now().isoformat()
         }
 
+@app.post("/validate-key")
+async def validate_api_key(request: ValidateKeyRequest):
+    """Validate user's Gemini API key"""
+    try:
+        if not request.api_key.strip():
+            raise HTTPException(status_code=400, detail="API key is required")
+        
+        # Test the API key with a minimal request
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {request.api_key.strip()}",
+                },
+                json={
+                    "model": "gemini-2.0-flash",
+                    "messages": [{"role": "user", "content": "test"}],
+                    "max_tokens": 5
+                },
+                timeout=10.0
+            )
+            
+            if response.status_code == 200:
+                return {"valid": True, "message": "API key is valid"}
+            else:
+                return {"valid": False, "message": "Invalid API key"}
+                
+    except Exception as e:
+        logger.error(f"Error validating API key: {str(e)}")
+        return {"valid": False, "message": "Error validating API key"}
+
 @app.post("/ingest")
 async def ingest_repository(request: RepoRequest):
     """Ingest repository with enhanced error handling and timeouts"""
@@ -395,7 +427,7 @@ async def ingest_repository(request: RepoRequest):
         # Generate a unique session ID
         session_id = str(uuid.uuid4())
         
-        logger.info(f"Ingesting repository: {request.repo_url} | Session: {session_id}")
+        logger.info(f"Ingesting repository: {request.repo_url} | Session: {session_id} | User Key: {'Yes' if request.api_key else 'No'}")
         
         try:
             # Ingest repository with timeout
@@ -431,12 +463,19 @@ async def ingest_repository(request: RepoRequest):
                 detail=f"Repository too large ({total_size / (1024*1024):.1f}MB). Maximum size is {MAX_REPO_SIZE / (1024*1024)}MB."
             )
         
-        # Store ingested repository data with metadata
-        session_data = SessionData(session_id, request.repo_url, summary, tree, content)
+        # Store ingested repository data with metadata and user API key
+        session_data = SessionData(
+            session_id=session_id,
+            repo_url=request.repo_url,
+            summary=summary,
+            tree=tree,
+            content=content,
+            user_api_key=request.api_key.strip() if request.api_key else None
+        )
         ingested_repos[session_id] = session_data
         
         # Log ingestion with size info
-        logger.info(f"Repository ingested successfully: {session_id} | Size: {session_data.content_size / 1024:.1f}KB")
+        logger.info(f"Repository ingested successfully: {session_id} | Size: {session_data.content_size / 1024:.1f}KB | User Key: {'Yes' if request.api_key else 'No'}")
         
         # Check memory after ingestion
         memory_stats = get_memory_usage()
@@ -448,6 +487,7 @@ async def ingest_repository(request: RepoRequest):
             "message": "Repository ingested successfully",
             "repo_url": request.repo_url,
             "summary": summary[:500] + "..." if len(summary) > 500 else summary,
+            "has_user_key": bool(request.api_key),
             "metadata": {
                 "content_size_kb": round(session_data.content_size / 1024, 1),
                 "total_size_kb": round(total_size / 1024, 1),
@@ -479,16 +519,17 @@ async def generate_documentation(request: DocsRequest):
         # Update last accessed time
         session_data.touch()
         
-        logger.info(f"Starting documentation generation for session: {request.session_id}")
+        logger.info(f"Starting documentation generation for session: {request.session_id} | User Key: {'Yes' if session_data.user_api_key else 'No'}")
         
         try:
-            # Generate documentation with timeout
+            # Generate documentation with timeout - pass user API key if available
             result = await asyncio.wait_for(
                 doc_generator.generate_full_documentation(
                     repo_url=session_data.repo_url,
                     summary=session_data.summary,
                     tree=session_data.tree,
-                    content=session_data.content
+                    content=session_data.content,
+                    user_api_key=session_data.user_api_key  # Pass user's API key
                 ),
                 timeout=DOCS_GENERATION_TIMEOUT
             )
@@ -593,6 +634,9 @@ async def chat_with_repo(request: ChatRequest):
                 conversations[request.session_id].messages[-14:]
             )
         
+        # Determine which API key to use
+        api_key = session_data.user_api_key if session_data.user_api_key else os.environ.get('GEMINI_API_KEY')
+        
         try:
             # Send request to API with timeout
             async with httpx.AsyncClient() as client:
@@ -600,7 +644,7 @@ async def chat_with_repo(request: ChatRequest):
                     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
                     headers={
                         "Content-Type": "application/json",
-                        "Authorization": f"Bearer {os.environ.get('GEMINI_API_KEY')}",
+                        "Authorization": f"Bearer {api_key}",
                     },
                     json={
                         "model": "gemini-2.0-flash",
@@ -611,7 +655,30 @@ async def chat_with_repo(request: ChatRequest):
                 
                 if response.status_code != 200:
                     logger.error(f"Chat API error: {response.status_code} - {response.text}")
-                    raise HTTPException(status_code=502, detail="AI service temporarily unavailable")
+                    
+                    # If user API key failed, try system key as fallback
+                    if session_data.user_api_key and response.status_code == 401:
+                        logger.info(f"User API key failed, trying system key as fallback for session: {request.session_id}")
+                        
+                        fallback_response = await client.post(
+                            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+                            headers={
+                                "Content-Type": "application/json",
+                                "Authorization": f"Bearer {os.environ.get('GEMINI_API_KEY')}",
+                            },
+                            json={
+                                "model": "gemini-2.0-flash",
+                                "messages": conversations[request.session_id].messages
+                            },
+                            timeout=CHAT_TIMEOUT
+                        )
+                        
+                        if fallback_response.status_code == 200:
+                            response = fallback_response
+                        else:
+                            raise HTTPException(status_code=502, detail="AI service temporarily unavailable")
+                    else:
+                        raise HTTPException(status_code=502, detail="AI service temporarily unavailable")
                 
                 result = response.json()
                 assistant_response = result["choices"][0]["message"]["content"]
@@ -663,6 +730,7 @@ async def get_session_info(session_id: str):
             "expires_at": (session_data.created_at + timedelta(hours=SESSION_TTL_HOURS)).isoformat(),
             "content_size_kb": round(session_data.content_size / 1024, 1),
             "request_count": session_data.request_count,
+            "has_user_key": bool(session_data.user_api_key),
             "summary_preview": session_data.summary[:300] + "..." if len(session_data.summary) > 300 else session_data.summary
         }
     else:

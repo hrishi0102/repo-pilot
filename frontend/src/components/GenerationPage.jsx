@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 function GenerationPage() {
   const [sessionId, setSessionId] = useState("");
   const [repoUrl, setRepoUrl] = useState("");
+  const [hasUserKey, setHasUserKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState(1); // 1: Ready to generate, 2: Generating, 3: Complete
@@ -12,6 +13,7 @@ function GenerationPage() {
   useEffect(() => {
     const savedSessionId = localStorage.getItem("sessionId");
     const savedRepoUrl = localStorage.getItem("repoUrl");
+    const savedHasUserKey = localStorage.getItem("hasUserKey") === "true";
 
     if (!savedSessionId || !savedRepoUrl) {
       navigate("/");
@@ -20,6 +22,7 @@ function GenerationPage() {
 
     setSessionId(savedSessionId);
     setRepoUrl(savedRepoUrl);
+    setHasUserKey(savedHasUserKey);
   }, [navigate]);
 
   const handleGenerateDocumentation = async () => {
@@ -66,6 +69,7 @@ function GenerationPage() {
     localStorage.removeItem("sessionId");
     localStorage.removeItem("repoUrl");
     localStorage.removeItem("documentationData");
+    localStorage.removeItem("hasUserKey");
     navigate("/");
   };
 
@@ -86,8 +90,22 @@ function GenerationPage() {
             Documentation Generation
           </h1>
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 inline-block">
-            <span className="text-gray-400 text-sm">Repository: </span>
-            <span className="text-white font-mono text-sm">{repoUrl}</span>
+            <div className="space-y-2">
+              <div>
+                <span className="text-gray-400 text-sm">Repository: </span>
+                <span className="text-white font-mono text-sm">{repoUrl}</span>
+              </div>
+              <div>
+                <span className="text-gray-400 text-sm">API Key: </span>
+                <span
+                  className={`text-sm font-medium ${
+                    hasUserKey ? "text-green-400" : "text-blue-400"
+                  }`}
+                >
+                  {hasUserKey ? "🔑 Using your key" : "🔧 Using system key"}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -105,9 +123,13 @@ function GenerationPage() {
                   <p className="text-amber-200/80 text-sm leading-relaxed">
                     Documentation generation is a computationally expensive
                     process that takes 6-8 minutes to complete. It uses advanced
-                    AI analysis to thoroughly examine your repository. Please
-                    ensure you want to proceed before starting, as this
-                    operation consumes significant resources.
+                    AI analysis to thoroughly examine your repository.
+                    {!hasUserKey && (
+                      <span className="block mt-2 font-medium">
+                        ⚡ Consider using your own Gemini API key for more
+                        reliable processing.
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

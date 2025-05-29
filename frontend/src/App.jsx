@@ -22,7 +22,8 @@ function App() {
       </main>
 
       <footer className="text-center text-gray-500 text-xs py-4 border-t border-gray-800">
-        Powered by Yaphub & Gemini
+        Built with 💙 by{" "}
+        <a href="https://hrishikeshpatil.vercel.app/">Hrishikesh</a>
       </footer>
     </div>
   );
