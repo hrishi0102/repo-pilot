@@ -6,6 +6,7 @@ import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import DiagramsViewer from "./DiagramsViewer";
 
 export default function DocumentationViewer() {
   const [docData, setDocData] = useState(null);
@@ -148,10 +149,10 @@ export default function DocumentationViewer() {
     ),
     hr: () => <hr className="border-gray-700 my-8" />,
   };
-
   const getContent = () => {
     if (!docData) return "";
     if (page === "introduction") return docData.introduction;
+    if (page === "diagrams") return null; // Will render DiagramsViewer component instead
     return docData.chapters[page]?.content || "# Not Found\n\nContent missing.";
   };
 
@@ -198,8 +199,7 @@ export default function DocumentationViewer() {
         <nav
           className="p-3 space-y-3 overflow-auto"
           style={{ height: "calc(100vh - 180px)" }}
-        >
-          <button
+        >          <button
             onClick={() => setPage("introduction")}
             className={`w-full text-left px-4 py-3 rounded transition-colors duration-200 ${
               page === "introduction"
@@ -209,6 +209,22 @@ export default function DocumentationViewer() {
           >
             <div className="font-medium flex items-center">
               <span className="mr-2 opacity-70">📄</span>Introduction
+            </div>
+          </button>
+
+          <button
+            onClick={() => setPage("diagrams")}
+            className={`w-full text-left px-4 py-3 rounded transition-colors duration-200 ${
+              page === "diagrams"
+                ? "bg-gray-800 text-gray-100 border-l-4 border-purple-500"
+                : "text-gray-400 hover:bg-gray-800 hover:text-gray-100 hover:border-l-4 hover:border-purple-400"
+            }`}
+          >
+            <div className="font-medium flex items-center">
+              <span className="mr-2 opacity-70">📊</span>Visual Diagrams
+            </div>
+            <div className="text-sm text-gray-500 mt-1">
+              Architecture & component diagrams
             </div>
           </button>
 
@@ -246,18 +262,20 @@ export default function DocumentationViewer() {
             New Repository
           </button>
         </div>
-      </aside>
-
-      {/* Main Content */}
+      </aside>      {/* Main Content */}
       <main className="flex-1 ml-64 pt-6 px-8 pb-8 overflow-auto flex justify-center bg-gray-950">
         <div className="prose prose-invert max-w-3xl w-full">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeSlug, rehypeAutolinkHeadings]}
-            components={markdownComponents}
-          >
-            {getContent()}
-          </ReactMarkdown>
+          {page === "diagrams" ? (
+            <DiagramsViewer diagrams={docData.diagrams} />
+          ) : (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeSlug, rehypeAutolinkHeadings]}
+              components={markdownComponents}
+            >
+              {getContent()}
+            </ReactMarkdown>
+          )}
         </div>
       </main>
     </div>
