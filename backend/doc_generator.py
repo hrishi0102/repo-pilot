@@ -2,6 +2,7 @@ import logging
 from typing import Dict, List, Optional
 from llm_client import llm_client
 from markdown_cleaner import markdown_cleaner
+from diagram_generator import diagram_generator
 import re
 
 logger = logging.getLogger(__name__)
@@ -246,7 +247,6 @@ Write comprehensive documentation including:
 
 NOTE: Output clean markdown only. Start with the chapter title as # heading.
 """
-        
         result = await llm_client.generate_content(prompt)
         if result:
             result = markdown_cleaner.clean_markdown(result)
@@ -271,6 +271,13 @@ Create an introduction with these sections:
 
 ## Overview
 What this repository does and who should use it...
+
+## Visual Architecture
+This documentation includes interactive visual diagrams to help you understand the codebase:
+- **Architecture Diagram**: High-level system overview and component relationships
+- **Class/Component Diagram**: Detailed view of classes, interfaces, and their relationships  
+- **Sequence Diagram**: Key user interactions and data flow
+- **Repository Structure**: Visual representation of folders and files
 
 ## Quick Start
 Basic setup steps...
@@ -368,15 +375,27 @@ Output clean markdown only. Use proper headings, code blocks, and lists.
             # Step 5: Parse chapter structure
             logger.info("Step 5: Parsing chapter structure...")
             parsed_chapters = self._parse_chapter_structure(raw_chapter_structure)
-            
-            # Step 6: Create introduction
-            logger.info("Step 6: Creating introduction...")
+            # Step 6: Generate diagrams
+            logger.info("Step 6: Generating Mermaid diagrams...")
+            try:
+                diagrams = await diagram_generator.generate_all_diagrams(
+                    repo_url=repo_url,
+                    abstractions=abstractions,
+                    relationships=relationships,
+                    tree=tree,
+                    content=content
+                )
+            except Exception as e:
+                logger.error(f"Error generating diagrams: {str(e)}")
+                diagrams = {}
+
+            # Step 7: Create introduction
+            logger.info("Step 7: Creating introduction...")
             introduction = await self.create_introduction(comprehensive_summary, abstractions, repo_url)
             if not introduction:
                 return {"error": "Failed to create introduction"}
-            
-            # Step 7: Write individual chapters
-            logger.info("Step 7: Writing individual chapters...")
+              # Step 8: Write individual chapters
+            logger.info("Step 8: Writing individual chapters...")
             chapters = {}
             
             for chapter_info in parsed_chapters:
@@ -405,7 +424,6 @@ Output clean markdown only. Use proper headings, code blocks, and lists.
                     }
                 else:
                     logger.warning(f"Failed to generate Chapter {chapter_info['number']}")
-            
             if not chapters:
                 return {"error": "Failed to generate any chapters"}
             
@@ -416,12 +434,14 @@ Output clean markdown only. Use proper headings, code blocks, and lists.
                 "repo_url": repo_url,
                 "introduction": introduction,
                 "chapters": chapters,
+                "diagrams": diagrams,
                 "metadata": {
                     "comprehensive_summary": comprehensive_summary,
                     "abstractions": abstractions,
                     "relationships": relationships,
                     "raw_chapter_structure": raw_chapter_structure,
-                    "total_chapters": len(chapters)
+                    "total_chapters": len(chapters),
+                    "total_diagrams": len(diagrams)
                 }
             }
             
@@ -429,5 +449,5 @@ Output clean markdown only. Use proper headings, code blocks, and lists.
             logger.error(f"Error in documentation generation: {str(e)}")
             return {"error": f"Documentation generation failed: {str(e)}"}
 
-# Global instance
+
 doc_generator = DocumentationGenerator()

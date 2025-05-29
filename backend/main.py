@@ -2,6 +2,9 @@ import os
 import uuid
 import time
 import asyncio
+import uvicorn
+import httpx
+import logging
 from datetime import datetime, timedelta
 from collections import defaultdict
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
@@ -10,8 +13,6 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from gitingest import ingest_async
-import httpx
-import logging
 from doc_generator import doc_generator
 
 # Configure logging
@@ -401,16 +402,16 @@ async def ingest_repository(request: RepoRequest):
             # Ingest repository with timeout
             summary, tree, content = await asyncio.wait_for(
                 ingest_async(
-                    request.repo_url, 
+                    request.repo_url,                    
                     exclude_patterns={
-                        "tests/*", "docs/*", "assets/*", "data/*", "public/*"
+                        "tests/*", "docs/*", "assets/*", "data/*", "public/*",
                         "examples/*", "images/*", "public/*", "static/*", 
                         "temp/*", "venv/*", ".venv/*", "*test*", 
                         "tests/*", "v1/*", "dist/*", "build/*", 
                         "experimental/*", "deprecated/*", "misc/*", 
                         "legacy/*", ".git/*", ".github/*", ".next/*", 
                         ".vscode/*", "obj/*", "bin/*", "node_modules/*", 
-                        "*.log","package-lock.json"
+                        "*.log", "package-lock.json"
                     }
                 ),
                 timeout=INGESTION_TIMEOUT
@@ -509,15 +510,16 @@ async def generate_documentation(request: DocsRequest):
         original_size = session_data.content_size
         session_data.content = session_data.content[:50000]  # Keep first 50KB for chat
         logger.info(f"Reduced session content size from {original_size/1024:.1f}KB to {len(session_data.content)/1024:.1f}KB")
-        
         return {
             "success": True,
             "session_id": request.session_id,
             "repo_url": result["repo_url"],
             "introduction": result["introduction"],
             "chapters": result["chapters"],
+            "diagrams": result.get("diagrams", {}),
             "metadata": {
                 "total_chapters": result["metadata"]["total_chapters"],
+                "total_diagrams": result["metadata"].get("total_diagrams", 0),
                 "comprehensive_summary": result["metadata"]["comprehensive_summary"][:300] + "...",
                 "abstractions_preview": result["metadata"]["abstractions"][:200] + "...",
                 "raw_chapter_structure": result["metadata"]["raw_chapter_structure"]
