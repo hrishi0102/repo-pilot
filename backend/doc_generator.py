@@ -334,7 +334,7 @@ Output clean markdown only. Use proper headings, code blocks, and lists.
                 {'number': 3, 'title': 'Key Workflows & Implementation', 'description': 'How the system works and implementation details'}
             ]
         
-        return chapters[:3]  # Limit to 3 chapters
+        return chapters[:4]  # Limit to 4 chapters
     
     async def generate_full_documentation(self, repo_url: str, summary: str, tree: str, content: str, user_api_key: str = None) -> Dict:
         """Main method that orchestrates the entire documentation generation process"""
