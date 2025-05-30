@@ -2,6 +2,7 @@ import logging
 from typing import Dict, List, Optional
 from llm_client import llm_client
 from markdown_cleaner import markdown_cleaner
+from mermaid_generator import mermaid_generator
 import re
 
 logger = logging.getLogger(__name__)
@@ -374,9 +375,19 @@ Output clean markdown only. Use proper headings, code blocks, and lists.
             introduction = await self.create_introduction(comprehensive_summary, abstractions, repo_url, user_api_key)
             if not introduction:
                 return {"error": "Failed to create introduction"}
-            
-            # Step 7: Write individual chapters
-            logger.info("Step 7: Writing individual chapters...")
+              # Step 7: Generate mermaid diagrams
+            logger.info("Step 7: Generating mermaid diagrams...")
+            mermaid_diagrams = await mermaid_generator.generate_all_diagrams(
+                repo_url=repo_url,
+                summary=comprehensive_summary,
+                tree=tree,
+                content=content,
+                abstractions=abstractions,
+                relationships=relationships,
+                user_api_key=user_api_key
+            )
+              # Step 8: Write individual chapters
+            logger.info("Step 8: Writing individual chapters...")
             chapters = {}
             
             for chapter_info in parsed_chapters:
@@ -411,18 +422,19 @@ Output clean markdown only. Use proper headings, code blocks, and lists.
                 return {"error": "Failed to generate any chapters"}
             
             logger.info(f"Documentation generation completed successfully with {len(chapters)} chapters")
-            
             return {
                 "success": True,
                 "repo_url": repo_url,
                 "introduction": introduction,
                 "chapters": chapters,
+                "mermaid_diagrams": mermaid_diagrams,
                 "metadata": {
                     "comprehensive_summary": comprehensive_summary,
                     "abstractions": abstractions,
                     "relationships": relationships,
                     "raw_chapter_structure": raw_chapter_structure,
-                    "total_chapters": len(chapters)
+                    "total_chapters": len(chapters),
+                    "total_diagrams": len(mermaid_diagrams)
                 }
             }
             
