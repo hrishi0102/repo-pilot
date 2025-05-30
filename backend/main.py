@@ -319,6 +319,9 @@ class ChatRequest(BaseModel):
 class DocsRequest(BaseModel):
     session_id: str
 
+class MermaidRequest(BaseModel):
+    session_id: str
+
 class ValidateKeyRequest(BaseModel):
     api_key: str
 
@@ -545,8 +548,7 @@ async def generate_documentation(request: DocsRequest):
             raise HTTPException(status_code=500, detail=result["error"])
         
         logger.info(f"Documentation generated successfully for session: {request.session_id}")
-        
-        # Optional: Clear heavy content after docs generation to save memory
+          # Optional: Clear heavy content after docs generation to save memory
         original_size = session_data.content_size
         session_data.content = session_data.content[:50000]  # Keep first 50KB for chat
         logger.info(f"Reduced session content size from {original_size/1024:.1f}KB to {len(session_data.content)/1024:.1f}KB")
@@ -557,19 +559,96 @@ async def generate_documentation(request: DocsRequest):
             "repo_url": result["repo_url"],
             "introduction": result["introduction"],
             "chapters": result["chapters"],
+            "mermaid_diagrams": result.get("mermaid_diagrams", {}),
             "metadata": {
                 "total_chapters": result["metadata"]["total_chapters"],
+                "total_diagrams": result["metadata"].get("total_diagrams", 0),
                 "comprehensive_summary": result["metadata"]["comprehensive_summary"][:300] + "...",
                 "abstractions_preview": result["metadata"]["abstractions"][:200] + "...",
                 "raw_chapter_structure": result["metadata"]["raw_chapter_structure"]
             }
         }
-        
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Unexpected error in documentation generation: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating documentation: {str(e)}")
+
+@app.post("/generate-mermaid")
+async def generate_mermaid_diagrams(request: MermaidRequest):
+    """Generate mermaid diagrams for the repository"""
+    try:
+        if request.session_id not in ingested_repos:
+            logger.warning(f"Session not found for mermaid generation: {request.session_id}")
+            raise HTTPException(status_code=404, detail="Session not found or expired. Please ingest repository again.")
+        
+        session_data = ingested_repos[request.session_id]
+        
+        # Check if session is expired
+        if session_data.is_expired():
+            del ingested_repos[request.session_id]
+            raise HTTPException(status_code=404, detail="Session expired. Please ingest repository again.")
+        
+        # Update last accessed time
+        session_data.touch()
+        
+        logger.info(f"Starting mermaid diagram generation for session: {request.session_id}")
+        
+        try:
+            # Import mermaid generator and doc generator
+            from mermaid_generator import mermaid_generator
+            from doc_generator import doc_generator
+            
+            # First, generate abstractions and relationships needed for diagrams
+            logger.info("Generating abstractions for mermaid diagrams...")
+            abstractions = await doc_generator.identify_abstractions(session_data.content, session_data.user_api_key)
+            if not abstractions:
+                abstractions = "No abstractions identified"
+            
+            logger.info("Generating comprehensive summary for mermaid diagrams...")
+            summary = await doc_generator.generate_comprehensive_summary(session_data.content, session_data.user_api_key)
+            if not summary:
+                summary = session_data.summary
+            
+            logger.info("Analyzing relationships for mermaid diagrams...")
+            relationships = await doc_generator.analyze_relationships(abstractions, summary, session_data.user_api_key)
+            if not relationships:
+                relationships = "No relationships identified"
+            
+            # Generate mermaid diagrams with timeout
+            diagrams = await asyncio.wait_for(
+                mermaid_generator.generate_all_diagrams(
+                    repo_url=session_data.repo_url,
+                    summary=summary,
+                    tree=session_data.tree,
+                    content=session_data.content,
+                    abstractions=abstractions,
+                    relationships=relationships,
+                    user_api_key=session_data.user_api_key
+                ),
+                timeout=600.0  # 10 minutes for diagram generation
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"Mermaid generation timeout for session: {request.session_id}")
+            raise HTTPException(
+                status_code=408, 
+                detail="Mermaid diagram generation timed out. The repository might be too complex."
+            )
+        
+        logger.info(f"Mermaid diagrams generated successfully for session: {request.session_id}")
+        
+        return {
+            "success": True,
+            "session_id": request.session_id,
+            "diagrams": diagrams,
+            "total_diagrams": len(diagrams)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in mermaid generation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating mermaid diagrams: {str(e)}")
 
 @app.post("/chat")
 async def chat_with_repo(request: ChatRequest):
